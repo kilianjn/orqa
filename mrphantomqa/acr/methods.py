@@ -378,7 +378,7 @@ class functions:
                     return
 
             print(sum(count))
-
+            
             return tuple(zip(count, images, spokes))
 
         def radialTrafo_LCOD(imagedata, centerpoint, slice=0, showplot=False):
