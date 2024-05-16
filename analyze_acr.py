@@ -16,12 +16,12 @@ dfs.get_data()
 
 analyzer = mrphantomqa.acrAnalyzer(dfs)
 # analyzer.high_contrast_spatial_resolution(True) # WIP...
-analyzer.geometric_accuracy(False, True) # Done.
-analyzer.slice_position_accuracy(False, True) # Done.
-analyzer.image_intensity_uniformity(False, True) # Done.
-analyzer.percent_ghosting_ratio(False, True) # Done.
-analyzer.low_contrast_object_detectibility("edges", False, True) # Done.
-analyzer.slice_thickness_accuracy(False, True) # Done.
+# analyzer.geometric_accuracy(False, True) # Done.
+# analyzer.slice_position_accuracy(False, True) # Done.
+# analyzer.image_intensity_uniformity(False, True) # Done.
+# analyzer.percent_ghosting_ratio(False, True) # Done.
+analyzer.low_contrast_object_detectibility("edges1", False, True) # Done.
+# analyzer.slice_thickness_accuracy(False, True) # Done.
 
 analyzer.get_results()
 analyzer.createReport()

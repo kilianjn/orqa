@@ -375,10 +375,9 @@ class functions:
                     countedSpokes, spokePosition = functions.lcod.countEdges1(lineArraysByAngle, showplot)
                     count.append(countedSpokes)
                     spokes.append(spokePosition)
-                    return
 
             print(sum(count))
-            
+
             return tuple(zip(count, images, spokes))
 
         def radialTrafo_LCOD(imagedata, centerpoint, slice=0, showplot=False):
@@ -540,19 +539,49 @@ class functions:
 
             return countedSpokes, foundSpokes
 
-        def countEdges1(edgeimage, showplot=False):
+        def countEdges1(edgeImage, showplot=False):
+            allAngles, length = edgeImage.shape
+            countThld = np.mean(edgeImage) + 2 * np.std(edgeImage)
+
+            peakcount = np.zeros((allAngles,6)) # per angle positive and negative threshold
             countedSpokes = 0
-            allAngles = list(range(14,31)) + \
-                        list(range(50,66)) + \
-                        list(range(88,101)) + \
-                        list(range(124,136)) + \
-                        list(range(159,168)) + \
-                        list(range(194,205)) + \
-                        list(range(230,238)) + \
-                        list(range(268,275)) + \
-                        list(range(304,311)) + \
-                        list(range(342,348))
-            pass
+            foundSpokes = []
+            
+            # allAngles = range(allAngles)
+            relevantAngles = []
+            relevantAngles.append([14,31])
+            relevantAngles.append([50,66])
+            relevantAngles.append([88,101])
+            relevantAngles.append([124,136])
+            relevantAngles.append([159,168])
+            relevantAngles.append([194,205])
+            relevantAngles.append([230,238])
+            relevantAngles.append([268,275])
+            relevantAngles.append([304,311])
+            relevantAngles.append([342,348])
+            
+            distances = []
+            for j in range(4): # Divide in 3 areas for peaks
+                distances.append(int((0.14 + 0.31*j)*length) if j != 3 else length-1)
+
+            for i in range(allAngles):
+                for j in range(3):
+                    peakcount[i,2*j] = 1 if any(edgeImage[i,distances[j]:distances[j+1]] > countThld) else 0
+                    peakcount[i,2*j+1] = 1 if any(edgeImage[i,distances[j]:distances[j+1]] < -countThld) else 0
+
+            for i in range(len(relevantAngles)):
+                columnSum = np.sum(peakcount[relevantAngles[i][0]:relevantAngles[i][1]], axis=0)
+                if (columnSum[0:2] > 0).sum() > 0 and (columnSum[2:4] > 0).sum() > 0 and (columnSum[4:6] > 0).sum() > 0:
+                    countedSpokes += 1
+                    foundSpokes.append(relevantAngles[i][0])
+                    foundSpokes.append(relevantAngles[i][1])
+            foundSpokes = np.array(foundSpokes)
+
+            return countedSpokes, foundSpokes
+
+                
+
+
 
 
     def getHistogram(imagedata, showplot=False):
