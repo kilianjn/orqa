@@ -15,111 +15,6 @@ class functions:
     def __init__(self):
         self.value = None
 
-    class findCenter:
-        def centerOfMass(thldimage, showplot = False):
-            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
-            com_x = 0
-            com_y = 0
-            y_ax, x_ax = thldimage.shape
-            totalsignal = np.sum(thldimage)
-
-            for x in range(x_ax):
-                com_x += (x * np.ma.sum(thldimage[:,x]))/totalsignal
-            for y in range(y_ax):
-                com_y += (y * np.sum(thldimage[y,:]))/totalsignal
-            # print(f"{com_x} und {com_y}")
-            if showplot:
-                plt.imshow(thldimage)
-                plt.scatter(com_x,com_y, marker="o")
-                plt.show()
-            return np.round(com_y).astype(int), np.round(com_x).astype(int)
-        
-        def centerOfMassFilled(thldimage, showplot=False):
-            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
-            com_x = 0
-            com_y = 0
-            y_ax, x_ax = thldimage.shape
-            tempimage = np.zeros(thldimage.shape)
-
-            for x in range(thldimage.shape[1]):
-                indicesOfOne = np.where(thldimage[:,x] == 1)[0]
-                if len(indicesOfOne) == 0:
-                    continue
-                minIndex = min(indicesOfOne)
-                maxIndex = max(indicesOfOne)
-                tempimage[minIndex:maxIndex,x] = 1
-
-            for y in range(thldimage.shape[0]):
-                indicesOfOne = np.where(thldimage[y,:] == 1)[0]
-                if len(indicesOfOne) == 0:
-                    continue
-                minIndex = min(indicesOfOne)
-                maxIndex = max(indicesOfOne)
-                tempimage[y,minIndex:maxIndex] = 1
-
-            totalsignal = np.sum(tempimage)
-
-            for x in range(x_ax):
-                com_x += (x * np.sum(tempimage[:,x]))/totalsignal
-            for y in range(y_ax):
-                com_y += (y * np.sum(tempimage[y,:]))/totalsignal
-
-            if showplot:
-                plt.imshow(tempimage)
-                plt.scatter(com_x,com_y, marker="o")
-                plt.show()
-            return (round(com_y), round(com_x))
- 
-    class getThreshold:
-        def findPeak(imagedata, skip_perc=10, showplot=False):
-            x, bins = functions.getHistogram(imagedata)
-            startpoint = int(len(x) * (skip_perc/100))
-
-            peak_value_count = np.max(x[startpoint:])
-            peak_value = np.mean(np.where(x[startpoint:] == peak_value_count)) + startpoint
-            if showplot:
-                plt.plot(bins,x)
-                plt.ylim(0,np.max(x[startpoint:]*1.1))
-                plt.axvline(peak_value, color="red", linestyle="dashed")
-                plt.axvline(startpoint, color="green", linestyle="dashed")
-                plt.show()
- 
-            return peak_value
-        
-        def findMinAlongRows(imagedata, showplot=False):
-            """Note: img is cut to only show a small cutout from the middle to avoid zeroes from left/right and noise from top/bottom"""
-            mins = []
-            height, width = imagedata.shape
-            cutout = imagedata[2:height-2, int(width/2)-5: int(width/2)+5]
-            for i in range(cutout.shape[1]):
-                mins.append(np.min(cutout[:,i]))
-            thld_value = np.max(mins).astype(int) + 1
-
-            return thld_value
-        
-        def otsuMethod(imagedata, skip_perc=0, showplot=False):
-            x, bins = functions.getHistogram(imagedata)
-            startpoint = int(len(x) * (skip_perc/100))
-            x = x[startpoint:]
-            bins = bins[startpoint:]
-            totalsignal = np.sum(x)
-
-            w_0 = np.empty(x.shape)
-            w_1 = np.empty(x.shape)
-            mu_0 = np.empty(x.shape)
-            mu_1 = np.empty(x.shape)
-
-            for i in range(len(x)):
-                w_0[i] = np.sum(x[:i+1]) / totalsignal
-                w_1[i] = 1 - w_0[i]
-
-                mu_0[i] = np.sum(x[:i+1] / totalsignal * bins[:i+1]) / w_0[i]
-                mu_1[i] = np.sum(x[i+1:] / totalsignal * bins[i+1:]) / w_1[i] if i < len(x)-1 else mu_1[-2]
-
-            sig_b = np.round(w_0 * w_1 * (mu_0 - mu_1)**2).astype(int)
-            threshold = np.mean(np.where(sig_b == np.max(sig_b))).astype(int) + startpoint
-            return threshold
-
     class ga:
         """Geometric Accuracy"""
         def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
@@ -564,13 +459,16 @@ class functions:
             for j in range(4): # Divide in 3 areas for peaks
                 distances.append(int((0.14 + 0.31*j)*length) if j != 3 else length-1)
 
-            for i in range(allAngles):
-                for j in range(3):
+            # Peakdetection
+            for i in range(allAngles): #iterate through all angles
+                for j in range(3): #iterate through all three peak areas as defined in var distances
                     peakcount[i,2*j] = 1 if any(edgeImage[i,distances[j]:distances[j+1]] > countThld) else 0
                     peakcount[i,2*j+1] = 1 if any(edgeImage[i,distances[j]:distances[j+1]] < -countThld) else 0
 
+            # Evaluation of peakdetection array over all angles
             for i in range(len(relevantAngles)):
                 columnSum = np.sum(peakcount[relevantAngles[i][0]:relevantAngles[i][1]], axis=0)
+                #At least one detection in an area is needed to make it count as detected.
                 if (columnSum[0:2] > 0).sum() > 0 and (columnSum[2:4] > 0).sum() > 0 and (columnSum[4:6] > 0).sum() > 0:
                     countedSpokes += 1
                     foundSpokes.append(relevantAngles[i][0])
@@ -579,10 +477,110 @@ class functions:
 
             return countedSpokes, foundSpokes
 
-                
+    class findCenter:
+        def centerOfMass(thldimage, showplot = False):
+            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
+            com_x = 0
+            com_y = 0
+            y_ax, x_ax = thldimage.shape
+            totalsignal = np.sum(thldimage)
 
+            for x in range(x_ax):
+                com_x += (x * np.ma.sum(thldimage[:,x]))/totalsignal
+            for y in range(y_ax):
+                com_y += (y * np.sum(thldimage[y,:]))/totalsignal
+            # print(f"{com_x} und {com_y}")
+            if showplot:
+                plt.imshow(thldimage)
+                plt.scatter(com_x,com_y, marker="o")
+                plt.show()
+            return np.round(com_y).astype(int), np.round(com_x).astype(int)
+        
+        def centerOfMassFilled(thldimage, showplot=False):
+            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
+            com_x = 0
+            com_y = 0
+            y_ax, x_ax = thldimage.shape
+            tempimage = np.zeros(thldimage.shape)
 
+            for x in range(thldimage.shape[1]):
+                indicesOfOne = np.where(thldimage[:,x] == 1)[0]
+                if len(indicesOfOne) == 0:
+                    continue
+                minIndex = min(indicesOfOne)
+                maxIndex = max(indicesOfOne)
+                tempimage[minIndex:maxIndex,x] = 1
 
+            for y in range(thldimage.shape[0]):
+                indicesOfOne = np.where(thldimage[y,:] == 1)[0]
+                if len(indicesOfOne) == 0:
+                    continue
+                minIndex = min(indicesOfOne)
+                maxIndex = max(indicesOfOne)
+                tempimage[y,minIndex:maxIndex] = 1
+
+            totalsignal = np.sum(tempimage)
+
+            for x in range(x_ax):
+                com_x += (x * np.sum(tempimage[:,x]))/totalsignal
+            for y in range(y_ax):
+                com_y += (y * np.sum(tempimage[y,:]))/totalsignal
+
+            if showplot:
+                plt.imshow(tempimage)
+                plt.scatter(com_x,com_y, marker="o")
+                plt.show()
+            return (round(com_y), round(com_x))
+ 
+    class getThreshold:
+        def findPeak(imagedata, skip_perc=10, showplot=False):
+            x, bins = functions.getHistogram(imagedata)
+            startpoint = int(len(x) * (skip_perc/100))
+
+            peak_value_count = np.max(x[startpoint:])
+            peak_value = np.mean(np.where(x[startpoint:] == peak_value_count)) + startpoint
+            if showplot:
+                plt.plot(bins,x)
+                plt.ylim(0,np.max(x[startpoint:]*1.1))
+                plt.axvline(peak_value, color="red", linestyle="dashed")
+                plt.axvline(startpoint, color="green", linestyle="dashed")
+                plt.show()
+ 
+            return peak_value
+        
+        def findMinAlongRows(imagedata, showplot=False):
+            """Note: img is cut to only show a small cutout from the middle to avoid zeroes from left/right and noise from top/bottom"""
+            mins = []
+            height, width = imagedata.shape
+            cutout = imagedata[2:height-2, int(width/2)-5: int(width/2)+5]
+            for i in range(cutout.shape[1]):
+                mins.append(np.min(cutout[:,i]))
+            thld_value = np.max(mins).astype(int) + 1
+
+            return thld_value
+        
+        def otsuMethod(imagedata, skip_perc=0, showplot=False):
+            x, bins = functions.getHistogram(imagedata)
+            startpoint = int(len(x) * (skip_perc/100))
+            x = x[startpoint:]
+            bins = bins[startpoint:]
+            totalsignal = np.sum(x)
+
+            w_0 = np.empty(x.shape)
+            w_1 = np.empty(x.shape)
+            mu_0 = np.empty(x.shape)
+            mu_1 = np.empty(x.shape)
+
+            for i in range(len(x)):
+                w_0[i] = np.sum(x[:i+1]) / totalsignal
+                w_1[i] = 1 - w_0[i]
+
+                mu_0[i] = np.sum(x[:i+1] / totalsignal * bins[:i+1]) / w_0[i]
+                mu_1[i] = np.sum(x[i+1:] / totalsignal * bins[i+1:]) / w_1[i] if i < len(x)-1 else mu_1[-2]
+
+            sig_b = np.round(w_0 * w_1 * (mu_0 - mu_1)**2).astype(int)
+            threshold = np.mean(np.where(sig_b == np.max(sig_b))).astype(int) + startpoint
+            return threshold
 
     def getHistogram(imagedata, showplot=False):
         # all_bins = np.linspace(int(np.min(imagedata)), int(np.max(imagedata)+1), int(np.max(imagedata)-np.min(imagedata)+2))
@@ -624,6 +622,7 @@ class functions:
         return lineArray
 
     def draw_line1(imagedata, startpoint, angle):
+        """Draws Line in one direction from startpoint. Returns mask and values across the line"""
         angle = np.deg2rad(angle)
         y_startpoint, x_startpoint = startpoint
 

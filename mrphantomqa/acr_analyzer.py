@@ -186,17 +186,17 @@ class acrAnalyzer:
     def get_results(self):
         table = [["Test", "Pass value", "Measured value", "Pass/Fail"]]
         if self.res_GA is not None:
-            table.append(["GA", "190 +- 5", str(np.round(self.res_GA,2)), "Pass" if np.abs(self.res_GA - 190) < 10 else "Fail"])
+            table.append(["GA", "190mm +- 5mm", f"{np.round(self.res_GA,1)}mm", "Pass" if np.abs(self.res_GA - 190) < 10 else "Fail"])
         if self.res_SPA is not None:
-            table.append(["SPA", "< 5", str(np.round(self.res_SPA,2)), "Pass" if np.abs(self.res_SPA) < 5 else "Fail"])
+            table.append(["SPA", "Delta < 5mm", str(np.round(self.res_SPA,2)), "Pass" if np.abs(self.res_SPA) < 5 else "Fail"])
         if self.res_IIU is not None:
             table.append(["IIU", str(80), str(np.round(self.res_IIU,1)), "Pass" if np.abs(self.res_IIU) >80 else "Fail"])
         if self.res_PGA is not None:
-            table.append(["PSG", "5%", str(np.round(self.res_PGA*100,1)), "Pass" if np.abs(self.res_PGA *100) < 5 else "Fail"])
+            table.append(["PSG", "< 5.0%", f"{np.round(self.res_PGA*100,1)}%", "Pass" if np.abs(self.res_PGA *100) < 5 else "Fail"])
         if self.res_LCOD is not None:
-            table.append(["LCOD", str(37), str(self.res_LCOD), "Pass" if np.abs(self.res_LCOD) > 35 else "Fail"])
+            table.append(["LCOD", "37 Spokes", f"{self.res_LCOD} Spokes", "Pass" if np.abs(self.res_LCOD) > 35 else "Fail"])
         if self.res_STA is not None:
-            table.append(["STA", str(50), str(np.round(self.res_STA,2)), "Pass" if np.abs(self.res_LCOD) > 35 else "Fail"])
+            table.append(["STA", "5.0mm +- 0.7mm", f"{np.round(self.res_STA,2)}mm", "Pass" if np.abs(self.res_STA-5) < 0.7 else "Fail"])
 
         self.tableData = table
 
