@@ -14,3 +14,4 @@ class francisAnalyzer:
     def geometric_accuracy(self, showplot=False, print=False):
         
         pass
+    

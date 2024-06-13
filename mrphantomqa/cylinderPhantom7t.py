@@ -51,7 +51,7 @@ class cylinderAnalyzer:
             for i in range(self.imagedata.shape[1]):
                 thld = utfc.getThreshold.otsuMethod(self.imagedata[j,i,:,:])
                 thldimg = utfc.createThresholdImage(self.imagedata[j,i,:,:], thld)
-                filledthldImg = utfc.fillShape(thldimg)
+                filledthldImg = utfc.removeHoles(thldimg)
                 metrics[0,j,i], metrics[1,j,i] =  utfc.findCenter.centerOfMass(filledthldImg)
                 metrics[2,j,i] = np.sum(filledthldImg)
 

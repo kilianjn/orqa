@@ -1,15 +1,10 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from skimage.morphology import flood_fill
-from scipy import interpolate
-import tkinter as tk
-from tkinter import ttk
 
 #Debugging
 import mrphantomqa.utils.viewer as viw
+from ..utils.methods import functions as utilfunc
 
 class functions:
     def __init__(self):
@@ -24,7 +19,7 @@ class functions:
             spacing_y, spacing_x = spacing
             y_startpoint, x_startpoint = startpoint
 
-            line = functions.draw_line(imagedata, startpoint, angle_in_deg)
+            line = utilfunc.draw_line(imagedata, startpoint, angle_in_deg)
             line_image_overlap = imagedata & line
             nonzero_coords = np.argwhere(line_image_overlap)
 
@@ -55,19 +50,19 @@ class functions:
     class hcsr:
         """High-Contrast-Spatial-Resolution"""
         def cutoutRelevantSquare(imagedata, showplot=False):
-            peakValue = functions.getThreshold.findPeak(imagedata,10)
-            thldimg = functions.createThresholdImage(imagedata, peakValue/2)
-            com_x, com_y = functions.findCenter.centerOfMassFilled(thldimg)
-            coord = functions.getAreaBoundaries(thldimg, (np.round(com_y + 0.3 * com_y).astype(int) ,com_x))
+            peakValue = utilfunc.getThreshold.findPeak(imagedata,10)
+            thldimg = utilfunc.createThresholdImage(imagedata, peakValue/2)
+            com_x, com_y = utilfunc.findCenter.centerOfMassFilled(thldimg)
+            coord = utilfunc.getAreaBoundaries(thldimg, (np.round(com_y + 0.3 * com_y).astype(int) ,com_x))
             width = coord[3] - coord[2]
             height = coord[1] - coord[0]
             coord = (coord[0] + int(0.2 * height), coord[1] - int(0.2 * height), coord[2] + int(0.25*width), coord[3]-int(0.1*width))
-            test = functions.createSubarray(imagedata, coord).astype(int)
+            test = utilfunc.createSubarray(imagedata, coord).astype(int)
 
             if showplot:
                 # plt.imshow(test)
                 # plt.show()
-                functions.questionWindow(test, "All resolved?")
+                utilfunc.questionWindow(test, "All resolved?")
             
             return test
 
@@ -81,9 +76,9 @@ class functions:
             return minrow,maxrow+1
 
         def measureLength(imagedata, spacing=1):
-            thld = functions.getThreshold.otsuMethod(imagedata) 
+            thld = utilfunc.getThreshold.otsuMethod(imagedata) 
 
-            rowsum = np.sum(functions.createThresholdImage(imagedata, thld),axis=1)
+            rowsum = np.sum(utilfunc.createThresholdImage(imagedata, thld),axis=1)
             rowsum_conv = np.abs(np.convolve(rowsum,[1,-1],"valid"))
             a = rowsum_conv.shape[0]
             b = int(a*0.25)
@@ -92,8 +87,8 @@ class functions:
             upperhalf = imagedata[:border]
             lowerhalf = imagedata[border+1:]
 
-            upperthldimg = functions.createThresholdImage(upperhalf,thld)
-            lowerthldimg = functions.createThresholdImage(lowerhalf,thld)
+            upperthldimg = utilfunc.createThresholdImage(upperhalf,thld)
+            lowerthldimg = utilfunc.createThresholdImage(lowerhalf,thld)
 
             upperBorder = np.where(np.sum(upperthldimg, axis=0) > (max(np.sum(upperthldimg, axis=0)))/2)
             lowerBorder = np.where(np.sum(lowerthldimg, axis=0) > (max(np.sum(lowerthldimg, axis=0)))/2)
@@ -135,7 +130,7 @@ class functions:
         
         def searchForCircularSpots(imagedata, center, roiDiameter, kernelsize, showplot=False):
             convolvedImg = cv.filter2D(imagedata, -1, np.ones((kernelsize,kernelsize))/(kernelsize**2))
-            roiMask = functions.circularROI(imagedata, center, roiDiameter)
+            roiMask = utilfunc.circularROI(imagedata, center, roiDiameter)
             convImgROI = np.ma.masked_array(convolvedImg, roiMask)
             maxValue = np.max(convImgROI)
             minValue = np.min(convImgROI)
@@ -155,7 +150,7 @@ class functions:
         def calcPSG(imagedata, thldimg, center, showplot=False):
             radius,_ = functions.ga.measureDistance(thldimg,center,0)
             radius /= 2
-            centermask = functions.circularROI(imagedata, center, 0.8*radius)
+            centermask = utilfunc.circularROI(imagedata, center, 0.8*radius)
 
             spaceTop = imagedata.shape[0] - center[0] - radius
             spaceBot = center[0] - radius
@@ -163,10 +158,10 @@ class functions:
             spaceLeft = center[1] - radius
             ellipseRadius = np.min([spaceBot,spaceLeft,spaceRight,spaceBot])
 
-            topmask = functions.circularROI(imagedata, center, ellipseRadius/2,False,0,radius + 1.3 * spaceTop/2,3.2,0.7)
-            botmask = functions.circularROI(imagedata, center, ellipseRadius/2,False,0,-(radius + 1.3 * spaceBot/2),3.2,0.7)
-            rightmask = functions.circularROI(imagedata, center, ellipseRadius/2,False,radius + 1.3 * spaceRight/2,0,0.7,3.2)
-            leftmask = functions.circularROI(imagedata, center, ellipseRadius/2,False,-(radius + 1.3 * spaceLeft/2),0,0.7,3.2)
+            topmask = utilfunc.circularROI(imagedata, center, ellipseRadius/2,False,0,radius + 1.3 * spaceTop/2,3.2,0.7)
+            botmask = utilfunc.circularROI(imagedata, center, ellipseRadius/2,False,0,-(radius + 1.3 * spaceBot/2),3.2,0.7)
+            rightmask = utilfunc.circularROI(imagedata, center, ellipseRadius/2,False,radius + 1.3 * spaceRight/2,0,0.7,3.2)
+            leftmask = utilfunc.circularROI(imagedata, center, ellipseRadius/2,False,-(radius + 1.3 * spaceLeft/2),0,0.7,3.2)
 
             meantop = np.round(np.mean(np.ma.masked_array(imagedata,topmask)),2)
             meanbot = np.round(np.mean(np.ma.masked_array(imagedata,botmask)),2)
@@ -199,25 +194,25 @@ class functions:
             # Interpolation
             interpolatedArray = np.zeros((11,imagedata.shape[1]*2,imagedata.shape[2]*2))
             for slice in [7,8,9,10]:
-                interpolatedArray[slice] = functions.interpolateImage(imagedata[slice],2)
+                interpolatedArray[slice] = utilfunc.interpolateImage(imagedata[slice],2)
             imagedata = interpolatedArray
 
             for slice in [7,8,9,10]:
                 ## Get general data
-                thld = functions.getThreshold.findPeak(imagedata[slice],10)
-                thldimg = functions.createThresholdImage(imagedata[slice], thld*0.8)
-                center = functions.findCenter.centerOfMass(thldimg)
+                thld = utilfunc.getThreshold.findPeak(imagedata[slice],10)
+                thldimg = utilfunc.createThresholdImage(imagedata[slice], thld*0.8)
+                center = utilfunc.findCenter.centerOfMass(thldimg)
 
                 ## Cutout center and get appropiate masks
-                mask = functions.cutoutStructureMask(thldimg, center)
+                mask = utilfunc.cutoutStructureMask(thldimg, center)
                 thldMaskedImg = np.ma.masked_array(thldimg, mask)
 
                 ## Data for mask
-                center_new = functions.findCenter.centerOfMassFilled(thldMaskedImg)
+                center_new = utilfunc.findCenter.centerOfMassFilled(thldMaskedImg)
                 diameter,_ = functions.ga.measureDistance(thldMaskedImg,center_new,0)
                 radius = diameter/2
 
-                circMask = functions.circularROI(imagedata[slice], center_new,radius)
+                circMask = utilfunc.circularROI(imagedata[slice], center_new,radius)
 
                 # Actual Computation
                 ## Normalize Image
@@ -279,7 +274,7 @@ class functions:
             lineArraysByAngle = []
             masks = []
             for i in range(-110, 250):
-                line, valuesacrosLine = functions.draw_line1(imagedata, centerpoint, i)
+                line, valuesacrosLine = utilfunc.draw_line1(imagedata, centerpoint, i)
                 lineArraysByAngle.append(valuesacrosLine)
                 masks.append(line)
             

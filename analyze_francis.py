@@ -1,47 +1,29 @@
 import mrphantomqa
-import mrphantomqa.utils.viewer as viw
-from mrphantomqa.utils.methods import functions as func
+from mrphantomqa.utils.methods import functions as utilfunc
+from mrphantomqa.francis.methods import functions as francisfunc
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-filepath = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/Data/ownTest/T1_ACR_0011"
-# filepath = "../mntvol"
-# filepath = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/Data/albin1.5tesla"
-# filepath = "/Volumes/KINGSTON/3dprint1_5T/DICOM/24032212/42080000"
-filepath = "/Volumes/KINGSTON/Francis/Kamera1/04192024"
+filepath = "/Volumes/KINGSTON/Francis/Kamera3/Goldstandard/Phantom^Francis_2024.06.11-16_36_52-DST-1.3.12.2.1107.5.99.3_20000101"
+filepath = "/Volumes/SANDISK/Francis/FrancisFantome_2024.06.13-10_10_19-DST-1.3.12.2.1107.5.99.3_19000101/Neuro_Vuxen_20240613_101047.700000"
 
 dfs = mrphantomqa.dicomFolderScanner(filepath,True)
 dfs.list_scans()
-dfs.choose_scan("125152.121000 FP_T2")
+dfs.choose_scan("122434.613000 5slcs_t1_b0std_dRxE_elfilt_vspec_2avg_tr200_te9_plane")
 dfs.sequence_properties()
 dfs.get_data()
-dfs.view_raw_image()
-
+# dfs.view_raw_image()
+spacing = dfs.metadata[0x52009230][0][0x00289110][0][0x00280030].value
 
 # analyzer = mrphantomqa.acrAnalyzer(dfs)
 img = dfs.imagedata[0]
 
-interpolatedArray = np.zeros((11,img.shape[1]*2,img.shape[2]*2))
-interpolatedArray[8] = func.interpolateImage(img[8],2)
-img = interpolatedArray
-# viw.plot2D(img)
-thld = func.getThreshold.findPeak(img[8],10)
-thldimg = func.createThresholdImage(img[8], thld*0.8)
-center = func.findCenter.centerOfMass(thldimg)
-print(center)
+thld = int(0.8 * utilfunc.getThreshold.findPeak(img[2],11, True))
+thld_img = utilfunc.createThresholdImage(img[2],thld, True)
+centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img,True)
 
-center = (258,264)
-circMask = func.circularROI(img[8], center,80)
+utilfunc.radialTrafo(thld_img,centerpoint,True)
+francisfunc.ga.measureDistance(thld_img,centerpoint,30,spacing, True)
+# francisfunc.ga.measureDistance(thld_img,centerpoint,-30,[1,1])
 
-cutout = np.ma.masked_array(img[8], circMask)
-viw.plot2D(cutout)
-lineArraysByAngle, _ = func.radialTrafo(cutout, center)
-
-edgeImage = []
-for angle in range(lineArraysByAngle.shape[0]):
-    edgeImage.append(np.convolve(lineArraysByAngle[angle], [1,0,-1], "valid"))
-edgeImage = np.array(edgeImage)
-lineArraysByAngle = edgeImage[:,:int(edgeImage.shape[1]*0.95)]
-
-viw.plot2D(lineArraysByAngle)

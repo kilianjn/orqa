@@ -1,4 +1,5 @@
-from .utils.methods import functions
+from .acr.methods import functions as acrfunc
+from .utils.methods import functions as utilfunc
 
 import csv
 from fpdf import FPDF
@@ -24,13 +25,13 @@ class acrAnalyzer:
 
     def geometric_accuracy(self, showplot=False, print=False):
         #x, bins = methods.getHistogram(self.imagedata_loc)
-        peak_value = functions.getThreshold.findPeak(self.imagedata_loc[0],10)
-        thldImage = functions.createThresholdImage(self.imagedata_loc[0], peak_value/2)
-        comy, comx = functions.findCenter.centerOfMassFilled(thldImage)
+        peak_value = utilfunc.getThreshold.findPeak(self.imagedata_loc[0],10)
+        thldImage = utilfunc.createThresholdImage(self.imagedata_loc[0], peak_value/2)
+        comy, comx = utilfunc.findCenter.centerOfMassFilled(thldImage)
 
-        measureResults1 = functions.ga.measureDistance(thldImage, (comy,comx), 45, self.pixelSpacing)
-        measureResults2 = functions.ga.measureDistance(thldImage, (comy,comx), -45, self.pixelSpacing)
-        measureResults3 = functions.ga.measureDistance(thldImage, (comy,comx), 0, self.pixelSpacing)
+        measureResults1 = acrfunc.ga.measureDistance(thldImage, (comy,comx), 45, self.pixelSpacing)
+        measureResults2 = acrfunc.ga.measureDistance(thldImage, (comy,comx), -45, self.pixelSpacing)
+        measureResults3 = acrfunc.ga.measureDistance(thldImage, (comy,comx), 0, self.pixelSpacing)
 
         if showplot or print:
             plt.imshow(self.imagedata_loc[0], cmap='gray')
@@ -49,24 +50,24 @@ class acrAnalyzer:
             
 
     def high_contrast_spatial_resolution(self, showplot=False, print=False):
-        self.res_HCSR = functions.hcsr.cutoutRelevantSquare(self.imagedata_loc[0],showplot)
+        self.res_HCSR = acrfunc.hcsr.cutoutRelevantSquare(self.imagedata_loc[0],showplot)
 
         return self.res_HCSR
     
     def slice_thickness_accuracy(self,showplot=False, print=False):
-        thldvalue = functions.getThreshold.findPeak(self.imagedata_loc[0], 10)
-        thldimg = functions.createThresholdImage(self.imagedata_loc[0], thldvalue/2)
-        center = functions.findCenter.centerOfMassFilled(thldimg)
+        thldvalue = utilfunc.getThreshold.findPeak(self.imagedata_loc[0], 10)
+        thldimg = utilfunc.createThresholdImage(self.imagedata_loc[0], thldvalue/2)
+        center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
-        coord = functions.getAreaBoundaries(thldimg, center)
-        img = functions.createSubarray(self.imagedata_loc[0], coord)
+        coord = utilfunc.getAreaBoundaries(thldimg, center)
+        img = utilfunc.createSubarray(self.imagedata_loc[0], coord)
         img = img[:,int(img.shape[1]*0.15):int(img.shape[1]*0.85)]
-        minrow, maxrow = functions.sta.getrows(img)
+        minrow, maxrow = acrfunc.sta.getrows(img)
         img = img[minrow:maxrow]        
 
-        length, coords, border = functions.sta.measureLength(img, self.pixelSpacing[1]) # Anstatt image border einsetzen.
-        thld = functions.getThreshold.otsuMethod(img)
-        thld_rect = functions.createThresholdImage(img, thld)
+        length, coords, border = acrfunc.sta.measureLength(img, self.pixelSpacing[1]) # Anstatt image border einsetzen.
+        thld = utilfunc.getThreshold.otsuMethod(img)
+        thld_rect = utilfunc.createThresholdImage(img, thld)
         self.res_STA = length
 
         if showplot or print:
@@ -89,17 +90,17 @@ class acrAnalyzer:
 
 
     def slice_position_accuracy(self, showplot=False, print=False):
-        thld = functions.getThreshold.findPeak(self.imagedata_loc[0],10)
-        thld_image = functions.createThresholdImage(self.imagedata_loc[0], thld/3)
-        center = functions.findCenter.centerOfMassFilled(thld_image)
+        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[0],10)
+        thld_image = utilfunc.createThresholdImage(self.imagedata_loc[0], thld/3)
+        center = utilfunc.findCenter.centerOfMassFilled(thld_image)
 
-        measureResults1 = functions.spa.getPositionDifference(thld_image, center)
+        measureResults1 = acrfunc.spa.getPositionDifference(thld_image, center)
 
-        thld = functions.getThreshold.findPeak(self.imagedata_loc[10],10)
-        thld_image = functions.createThresholdImage(self.imagedata_loc[10], thld/3)
-        center = functions.findCenter.centerOfMassFilled(thld_image)
+        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[10],10)
+        thld_image = utilfunc.createThresholdImage(self.imagedata_loc[10], thld/3)
+        center = utilfunc.findCenter.centerOfMassFilled(thld_image)
 
-        measureResults2 = functions.spa.getPositionDifference(thld_image, center)
+        measureResults2 = acrfunc.spa.getPositionDifference(thld_image, center)
 
         if showplot or print:
             dataset = (measureResults1, measureResults2)
@@ -119,12 +120,12 @@ class acrAnalyzer:
         pass
 
     def image_intensity_uniformity(self, showplot=False, print=False):
-        thld = functions.getThreshold.findPeak(self.imagedata_loc[6],10)
-        thldimg = functions.createThresholdImage(self.imagedata_loc[6], thld/2)
-        center = functions.findCenter.centerOfMassFilled(thldimg)
+        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[6],10)
+        thldimg = utilfunc.createThresholdImage(self.imagedata_loc[6], thld/2)
+        center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
         kernelsize = 11
-        maxValue, minValue, maxCoord, minCoord, convImgROI = functions.iiu.searchForCircularSpots(self.imagedata_loc[6],center, 60, kernelsize)
+        maxValue, minValue, maxCoord, minCoord, convImgROI = acrfunc.iiu.searchForCircularSpots(self.imagedata_loc[6],center, 60, kernelsize)
 
         if showplot or print:
             plt.imshow(convImgROI)
@@ -140,11 +141,11 @@ class acrAnalyzer:
         return
     
     def percent_ghosting_ratio(self, showplot=False, print=False):
-        thld = functions.getThreshold.findPeak(self.imagedata_loc[6],10)
-        thldimg = functions.createThresholdImage(self.imagedata_loc[6], thld/2)
-        center = functions.findCenter.centerOfMassFilled(thldimg)
+        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[6],10)
+        thldimg = utilfunc.createThresholdImage(self.imagedata_loc[6], thld/2)
+        center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
-        result, imagemasks, data = functions.psg.calcPSG(self.imagedata_loc[6],thldimg, center)
+        result, imagemasks, data = acrfunc.psg.calcPSG(self.imagedata_loc[6],thldimg, center)
 
         resultText = f"center:{data[0]}\ntop:{data[1]}\nbot:{data[3]}\nright:{data[2]}\nleft:{data[4]}"
 
@@ -164,7 +165,7 @@ class acrAnalyzer:
 
     def low_contrast_object_detectibility(self, method="peaks", showplot=False, print=False):
         # spokesIm11 = methods.questionWindow(analyzer.imagedata_loc[10],"Count spokes")
-        measuedResults = functions.lcod.calcLCOD(self.imagedata_loc, method)
+        measuedResults = acrfunc.lcod.calcLCOD(self.imagedata_loc, method)
 
         if showplot or print:
             fig, axlist = plt.subplots(1,4)  

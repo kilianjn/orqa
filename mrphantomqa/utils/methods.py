@@ -12,14 +12,7 @@ from tqdm import tqdm
 #Debugging
 import mrphantomqa.utils.viewer as viw
 
-from ..acr.methods import functions as acrFunctions
-from ..glover.methods import functions as gloverFunctions
-
-class functions(acrFunctions, gloverFunctions):
-    def __init__(self):
-        super().__init__()
-
-
+class functions:
     class findCenter:
         def centerOfMass(thldimage, showplot = False):
             assert len(np.unique(thldimage)) == 2,"Image values must be binary"
@@ -70,7 +63,7 @@ class functions(acrFunctions, gloverFunctions):
                 com_y += (y * np.sum(tempimage[y,:]))/totalsignal
 
             if showplot:
-                plt.imshow(tempimage)
+                plt.imshow(thldimage)
                 plt.scatter(com_x,com_y, marker="o")
                 plt.show()
             return (round(com_y), round(com_x))
@@ -316,8 +309,8 @@ class functions(acrFunctions, gloverFunctions):
 
 
 
-    def fillShape(thldimage, showplot=False):
-        """Fills shape"""
+    def removeHoles(thldimage, showplot=False):
+        """Fills shape and removes holes"""
         assert len(np.unique(thldimage)) == 2,"Image values must be binary"
 
         tempimage = np.zeros(thldimage.shape)
