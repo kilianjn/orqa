@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from scipy import interpolate
+from scipy import interpolate, ndimage
 from skimage.morphology import flood_fill
 import tkinter as tk
 from tkinter import ttk
@@ -15,7 +15,7 @@ import mrphantomqa.utils.viewer as viw
 class functions:
     class findCenter:
         def centerOfMass(thldimage, showplot = False):
-            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
+            # assert len(np.unique(thldimage)) == 2,"Image values must be binary"
             com_x = 0
             com_y = 0
             y_ax, x_ax = thldimage.shape
@@ -129,9 +129,14 @@ class functions:
         return x,bins[0:-1]
 
     def createThresholdImage(imagedata, threshold, showplot=False):
-        thld_image = np.zeros(np.shape(imagedata))
-        thld_image[np.where(imagedata > threshold)] = 1
+        thld_image = np.zeros(imagedata.shape)
+        mask = np.ma.getmask(imagedata)
+        thld_image[np.where(imagedata >= threshold)] = 1
         thld_image = thld_image.astype(int)
+        
+        if mask.any():
+            thld_image = np.ma.masked_array(thld_image, mask)
+
         if showplot:
             plt.imshow(thld_image)
             plt.show()
@@ -200,12 +205,13 @@ class functions:
         return boundaries
     
     def cutoutStructureMask(thldimg, startpoint,showplot=False):
+        """creates mask in binary image using floodfill and filles holes in mask"""
         assert len(np.unique(thldimg)) == 2,"Image values must be binary"
         coordinates = None
 
         temp = flood_fill(thldimg, startpoint, 2)
         mask = temp == 2
-
+        mask = ndimage.binary_fill_holes(mask)
         if showplot:
             plt.scatter(startpoint[1], startpoint[0])
             plt.imshow(np.ma.masked_array(thldimg, ~mask))
@@ -217,7 +223,7 @@ class functions:
         min_row, max_row, min_col, max_col = boundaries
         subarray = imagedata[min_row:max_row+1, min_col:max_col+1]
         return subarray
-    
+
     def interpolateImage(imagedata, resMultiple:int=2):
         """Interpolator, which doubles the array size in both x and y direction. Expects 2D array"""
         if len(imagedata.shape) != 2:
@@ -307,8 +313,6 @@ class functions:
         window.mainloop()
         return window.user_input
 
-
-
     def removeHoles(thldimage, showplot=False):
         """Fills shape and removes holes"""
         assert len(np.unique(thldimage)) == 2,"Image values must be binary"
@@ -337,3 +341,39 @@ class functions:
             plt.show()
 
         return tempimage
+    
+    def convolveImage(imagedata, kernel):
+        """Returns convolved image with """
+        return cv.filter2D(imagedata, -1, kernel)
+    
+    def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
+        """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
+        as length between the first and last 1 along the line in the picture."""
+        assert len(np.unique(imagedata)) == 2 or len(np.unique(imagedata)) == 3,"Image values must be binary" #3 for the case of masked arrays
+        spacing_y, spacing_x = spacing
+        y_startpoint, x_startpoint = startpoint
+
+        line, _ = functions.draw_line1(imagedata, startpoint, angle_in_deg)
+        line_image_overlap = np.ma.masked_array(imagedata,line)
+        nonzero_coords = np.argwhere(line_image_overlap)
+
+        if len(nonzero_coords) > 0:
+            # Find the two most outer points
+            outer_points = np.array([nonzero_coords[0], nonzero_coords[-1]])
+            length = np.round(np.sqrt(((outer_points[0,1] - outer_points[1,1])*spacing_x)**2 + ((outer_points[0,0] - outer_points[1,0])*spacing_y)**2),3)
+
+            if showplot:
+                # Plot imagedata
+                plt.imshow(imagedata, cmap='gray')
+                # Plot the two most outer points
+                plt.scatter(outer_points[:, 1], outer_points[:, 0], c='red', marker='x')
+                plt.plot(outer_points[:, 1], outer_points[:, 0], label=f"Length = {length}")
+                # Plot startpoint
+                plt.scatter(x_startpoint, y_startpoint, c='blue', marker='x')
+                plt.legend()
+                plt.show()
+            return length
+        
+        else:
+            # print("No non-zero elements found in line_image_overlap.")
+            return 0

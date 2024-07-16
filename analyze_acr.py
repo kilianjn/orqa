@@ -1,8 +1,6 @@
 import mrphantomqa
 import mrphantomqa.utils.viewer as viw
 
-#IMPORTANT: Export MRI data in Interoperability Mode!!!
-
 filepath = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/Data/ownTest/T1_ACR_0011"
 # filepath = "../mntvol"
 # filepath = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/Data/albin1.5tesla"

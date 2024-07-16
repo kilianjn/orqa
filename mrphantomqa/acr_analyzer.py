@@ -1,10 +1,10 @@
-from .acr.methods import functions as acrfunc
-from .utils.methods import functions as utilfunc
-
 import csv
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 import numpy as np
+
+from .acr.methods import functions as acrfunc
+from .utils.methods import functions as utilfunc
 
 class acrAnalyzer:
     def __init__(self, data) -> None:

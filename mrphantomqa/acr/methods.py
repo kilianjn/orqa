@@ -1,10 +1,10 @@
 import cv2 as cv
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from ..utils.methods import functions as utilfunc
 
 #Debugging
 import mrphantomqa.utils.viewer as viw
-from ..utils.methods import functions as utilfunc
 
 class functions:
     def __init__(self):
@@ -16,6 +16,7 @@ class functions:
             """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
             as length between the first and last 1 along the line in the picture."""
             assert len(np.unique(imagedata)) == 2,"Image values must be binary"
+            # imagedata = imagedata.astype(int)
             spacing_y, spacing_x = spacing
             y_startpoint, x_startpoint = startpoint
 
