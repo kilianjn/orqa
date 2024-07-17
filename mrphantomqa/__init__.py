@@ -8,10 +8,20 @@ This package provides the following main modules:
 
 For more information, refer to the readme.md file.
 
-Author: Ramesh Jain
+Author: Kilian Jain
 """
 
 from .folder_scanner import dicomFolderScanner
 from .glover_analyzer import gloverAnalyzer
 from .acr_analyzer import acrAnalyzer
 from .cylinderPhantom7t import cylinderAnalyzer
+
+import os
+
+def askforpath():
+    while True:
+        path = input("Type the path of the desired DICOM directory: \n")
+        if os.path.exists(path):
+            return path
+        else:
+            print("Path does not exist. Try anew.")

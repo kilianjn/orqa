@@ -80,6 +80,23 @@ class dicomFolderScanner:
         self.all_sequences = list(dicom_files.keys())
         self.all_dcmfiles = dicom_files
         
+    def menuGUI(self):
+        while True:
+            print("\nPlease select a sequence by entering the corresponding number:")
+            sequences = [x for x in self.all_sequences if not "PhoenixZIPReport" in x]
+            for idx, sequence in enumerate(sequences):
+                print(f"{idx + 1}. {sequence}")
+
+            try:
+                choice = int(input("Enter the number of the sequence you want to choose: ")) - 1
+                if 0 <= choice < len(sequences):
+                    self.choose_scan(sequences[choice])
+                    break
+                else:
+                    print("Invalid number. Please try again.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
     def list_scans(self):
         print("\nList of different scans in the folder:")
         for scan in [x for x in self.all_sequences if not "PhoenixZIPReport" in x]:

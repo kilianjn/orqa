@@ -375,5 +375,5 @@ class functions:
             return length
         
         else:
-            # print("No non-zero elements found in line_image_overlap.")
+            print("No non-zero elements found in line_image_overlap.")
             return 0
