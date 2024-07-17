@@ -147,7 +147,7 @@ class functions:
         y_startpoint, x_startpoint = startpoint
 
         height, width = imagedata.shape
-        lineArray = np.zeros((height, width), dtype=int)
+        lineArray = np.zeros((height, width), dtype=bool)
         max_length = int(2 * np.ceil(np.sqrt(height**2 + width**2)))
 
         timepoints = np.arange(stop = np.ceil(max_length/2)+1, start=np.floor(-max_length/2))
@@ -353,8 +353,8 @@ class functions:
         spacing_y, spacing_x = spacing
         y_startpoint, x_startpoint = startpoint
 
-        line, _ = functions.draw_line1(imagedata, startpoint, angle_in_deg)
-        line_image_overlap = np.ma.masked_array(imagedata,line)
+        line = functions.draw_line(imagedata, startpoint, angle_in_deg)
+        line_image_overlap = np.ma.masked_array(imagedata,~line)
         nonzero_coords = np.argwhere(line_image_overlap)
 
         if len(nonzero_coords) > 0:

@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 
+from collections import Counter
 
 #Debugging
 import mrphantomqa.utils.viewer as viw
@@ -49,7 +50,7 @@ class functions:
             return length, outer_points
         
     class res:
-        """Geometric Accuracy"""
+        """Resolution"""
         def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
             """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
             as length between the first and last 1 along the line in the picture."""
@@ -212,3 +213,127 @@ class functions:
                 plt.legend()
                 plt.show()
             return maxValue, minValue, maxCoord, minCoord
+        
+    class grid:
+        def cutoutSquare(imagedata, showplot=False):
+            thld = utilFunc.getThreshold.otsuMethod(imagedata)
+            thld_img = utilFunc.createThresholdImage(imagedata,thld)
+            centerpoint = utilFunc.findCenter.centerOfMassFilled(thld_img)
+
+            diameter = utilFunc.measureDistance(thld_img, centerpoint, 45)
+
+            center_offset = int(diameter * 0.25)
+            coord1 = centerpoint[1] - center_offset
+            coord2 = centerpoint[1] + center_offset
+            coord3 = centerpoint[0] - center_offset
+            coord4 = centerpoint[0] + center_offset
+
+
+            center_cutout = imagedata[coord1:coord2,coord3:coord4]
+
+            if showplot:
+                plt.subplot(121)
+                plt.imshow(imagedata)
+                plt.subplot(122)
+                plt.imshow(center_cutout)
+                plt.show()
+
+            return center_cutout
+
+        def imagePreProcessing(imagedata, showplot=False):
+            ## Thresholding
+            thld = utilFunc.getThreshold.otsuMethod(imagedata)
+            thld_img = utilFunc.createThresholdImage(imagedata,thld)
+
+            ## Preparing for cv lib
+            processedImage = thld_img * 255
+            processedImage = processedImage.astype(np.uint8)
+            processedImage = ~processedImage
+
+            ## Dilatation and erosion
+            kernel = np.ones((3,3),np.uint8)
+            processedImage = cv.dilate(processedImage,kernel,iterations = 1)
+            processedImage = cv.erode(processedImage,kernel,iterations = 1)
+            
+            return processedImage
+        
+        def gridDetect(imagedata):
+            """
+            Takes in binarized imagedata
+            blavblalba
+            """
+            # Line Detection
+            ## Hough Transform
+            houghThld = imagedata.shape[1]-1
+            lines = cv.HoughLines(imagedata, 1, np.pi / 180, houghThld)
+
+            # Line processing
+            if lines is None:
+                print("No lines found at all.")
+                return [0,0], False, None
+
+            ## Extract lines in certain angle region      
+            lines_hori_pre = [line for line in lines if line[0][1] < 0.02 or line[0][1] > np.pi - 0.02]
+            lines_vert_pre = [line for line in lines if 1.59 >= line[0][1] >= 1.55]
+
+            if lines_hori_pre == [] or lines_vert_pre == []:
+                print("No gridlines found.")
+                return [0,0], False, lines
+            
+            ## Discrimination of angle minorities
+
+            ### Horizontal lines
+            thetas = [line[0][1] for line in lines_hori_pre]
+            unique_thetas, counts = np.unique(thetas, return_counts=True)
+            most_common_theta = unique_thetas[np.argmax(counts)]
+            lines_hori = np.array([line for line in lines_hori_pre if line[0][1] == most_common_theta])
+
+            ### Vertical lines
+            thetas = [line[0][1] for line in lines_vert_pre]
+            unique_thetas, counts = np.unique(thetas, return_counts=True)
+            most_common_theta = unique_thetas[np.argmax(counts)]
+            lines_vert = np.array([line for line in lines_vert_pre if line[0][1] == most_common_theta])
+
+
+
+            ## Combination of all lines to one array for output.
+            lines_main = np.append(lines_hori, lines_vert, axis=0)
+
+            ## Calculation of median square size, check for perpendicularity
+            distance_hori = np.median([lines_hori[i+1][0][0] - lines_hori[i][0][0] for i in range(len(lines_hori)-1)]) - 1
+            distance_vert = np.median([lines_vert[i+1][0][0] - lines_vert[i][0][0] for i in range(len(lines_vert)-1)]) - 1
+
+            squaresize_in_pixels = [distance_vert, distance_hori]
+
+            angle_grid = np.abs(lines_vert[0][0][1] - lines_hori[0][0][1])
+
+            return squaresize_in_pixels, angle_grid, lines_main
+        
+        def printImage(imagedata, linedata, showplot, savefig):
+
+            plt.imshow(imagedata, cmap='gray')
+
+            if linedata is not None and (showplot or savefig):
+                for line in linedata:
+                    for rho, theta in line:
+                        a = np.cos(theta)
+                        b = np.sin(theta)
+                        x0 = a * rho
+                        y0 = b * rho
+                        x1 = int(x0 + 1000 * (-b))
+                        y1 = int(y0 + 1000 * (a))
+                        x2 = int(x0 - 1000 * (-b))
+                        y2 = int(y0 - 1000 * (a))
+
+                        plt.plot([x1, x2], [y1, y2], color='red')
+
+                plt.title("Detected Lines")
+                plt.xlim(0, imagedata.shape[1]-1)
+                plt.ylim(0,imagedata.shape[0]-1)
+                # plt.axis('off')  # Turn off axis numbers and ticks
+                if showplot:
+                    plt.show()
+                if savefig:
+                    plt.savefig("francis_grid.png")
+            
+            return None

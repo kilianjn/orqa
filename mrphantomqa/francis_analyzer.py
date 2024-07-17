@@ -26,7 +26,7 @@ class francisAnalyzer:
         thld = int(0.8 * utilfunc.getThreshold.findPeak(img,11))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
-
+        
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
 
         # Finding exact center using small mask over centerdot
@@ -58,14 +58,13 @@ class francisAnalyzer:
                     tempCoords = points
             longestLength.append(tempMaxLength)
             llCords.append(tempCoords)
-
         if showplot or savefig:
             plt.imshow(img)
             plt.scatter(centerpoint[1],centerpoint[0], marker="x", color="red")
             for i in range(len(llCords)):
                 plt.plot(llCords[i][:,1],llCords[i][:,0], color="red")
             if showplot:
-                 plt.plot()
+                plt.show()
             elif savefig:
                 plt.savefig("francis_res.png")
         
@@ -136,8 +135,8 @@ class francisAnalyzer:
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
 
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
-        roiDiameter = int(0.65*diameter)
-        centermask = utilfunc.circularROI(img, centerpoint, roiDiameter, True)
+        roiDiameter = int(0.32*diameter)
+        centermask = utilfunc.circularROI(img, centerpoint, roiDiameter)
 
 
         kernelsize = int(0.15 * roiDiameter)
@@ -168,8 +167,20 @@ class francisAnalyzer:
         pass
 
     def grid(self, showplot=False, savefig=False):
-        
-        pass
+        img = self.imagedata[2]
+        img_grid_pre = francisfunc.grid.cutoutSquare(img)
+
+        img_grid = francisfunc.grid.imagePreProcessing(img_grid_pre, False)
+
+        ## Grid Detection using the Hough Transform
+        dist_lines, angle_cross, lines = francisfunc.grid.gridDetect(img_grid)
+
+        squaresize = (self.spacing[0] * dist_lines[0]) * (self.spacing[1] * dist_lines[1])
+
+        francisfunc.grid.printImage(img_grid_pre, lines, showplot, savefig)
+
+        self.res_Grid_size = squaresize
+        self.res_Grid_angle = np.rad2deg(angle_cross)
 
     def size(self, showplot=False, savefig=False):
         img = self.imagedata[4]
