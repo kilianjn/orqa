@@ -18,9 +18,9 @@ from .cylinderPhantom7t import cylinderAnalyzer
 
 import os
 
-def askforpath():
+def askForPath():
     while True:
-        path = input("Type the path of the desired DICOM directory: \n")
+        path = str(input("Type the path of the desired DICOM directory: \n"))
         if os.path.exists(path):
             return path
         else:

@@ -1,5 +1,5 @@
 import mrphantomqa
-from mrphantomqa import askforpath
+from mrphantomqa import askForPath
 from mrphantomqa.francis_analyzer import francisAnalyzer
 
 ### DEBUG ###
@@ -13,9 +13,9 @@ from mrphantomqa.francis_analyzer import francisAnalyzer
 filepath = "/Volumes/KINGSTON/Francis/Kamera3/Goldstandard/Phantom^Francis_2024.06.11-16_36_52-DST-1.3.12.2.1107.5.99.3_20000101"
 # filepath = "/Volumes/SANDISK/Francis/FrancisFantome_2024.06.13-10_10_19-DST-1.3.12.2.1107.5.99.3_19000101/Neuro_Vuxen_20240613_101047.700000"
 filepath = "/Volumes/KINGSTON/Francis/Kamera2/06172024/Phantom^Francis_NaCl_2024.06.14-15_59_53-DST-1.3.12.2.1107.5.99.3_20000101/Neuro_Vuxen_20240614_160012.700000"
-# askforpath()
+# askForPath()
 dfs = mrphantomqa.dicomFolderScanner(filepath)
-# dfs.menuGUI()
+# dfs.menu_gui()
 dfs.list_scans()
 dfs.choose_scan("160615.436000 t1_tse_5slice")
 # dfs.choose_scan("164725.181000 T1 acr")

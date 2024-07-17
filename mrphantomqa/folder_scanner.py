@@ -80,7 +80,7 @@ class dicomFolderScanner:
         self.all_sequences = list(dicom_files.keys())
         self.all_dcmfiles = dicom_files
         
-    def menuGUI(self):
+    def menu_gui(self):
         while True:
             print("\nPlease select a sequence by entering the corresponding number:")
             sequences = [x for x in self.all_sequences if not "PhoenixZIPReport" in x]
@@ -155,7 +155,10 @@ class dicomFolderScanner:
         return tag
 
     def sequence_properties(self):
-        print(f"Image Information for {self.sel_sequence}:\nSlices: {self.get_dtag(0x00280008, 'N/A')} \nImages in timeseries: {self.get_dtag(0x00200105, 'N/A')} \nDimensions: x={self.get_dtag(0x00280010, 'N/A')}, y={self.get_dtag(0x00280011, 'N/A')}\n\n")
+        print(f"Image Information for {self.sel_sequence}:\n"
+              f"Slices: {self.get_dtag(0x00280008, 'N/A')} \n"
+              f"Images in timeseries: {self.get_dtag(0x00200105, 'N/A')}\n"
+              f"Dimensions: x={self.get_dtag(0x00280010, 'N/A')}, y={self.get_dtag(0x00280011, 'N/A')}\n\n")
 
     def _create_volume(self, aquNum="1"):
         volume = []
