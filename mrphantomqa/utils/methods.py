@@ -340,7 +340,7 @@ class functions:
             plt.imshow(tempimage)
             plt.show()
 
-        return tempimage
+        return tempimage.astype(bool)
     
     def convolveImage(imagedata, kernel):
         """Returns convolved image with """

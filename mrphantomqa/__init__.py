@@ -11,12 +11,13 @@ For more information, refer to the readme.md file.
 Author: Kilian Jain
 """
 
+import os
+
 from .folder_scanner import dicomFolderScanner
 from .glover_analyzer import gloverAnalyzer
 from .acr_analyzer import acrAnalyzer
 from .cylinderPhantom7t import cylinderAnalyzer
 
-import os
 
 def askForPath():
     while True:

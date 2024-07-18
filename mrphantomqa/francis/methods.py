@@ -160,7 +160,7 @@ class functions:
 
         def countEdges(edgeImage):
             allAngles, length = edgeImage.shape
-            countThld = np.mean(edgeImage) + 2.5 * np.std(edgeImage)
+            countThld = np.mean(edgeImage) + 2 * np.std(edgeImage)
 
             peakcount = np.zeros((allAngles,8)) # per angle 1 positive and 1 negative threshold
             countedSpokes = 0
@@ -337,3 +337,72 @@ class functions:
                     plt.savefig("francis_grid.png")
             
             return None
+        
+    class sta:
+        def cutoutRect(imagedata):
+            thld = utilFunc.getThreshold.otsuMethod(imagedata)
+            thld_img = utilFunc.createThresholdImage(imagedata,thld)
+            centerpoint = utilFunc.findCenter.centerOfMassFilled(thld_img)
+
+            diameter = utilFunc.measureDistance(thld_img, centerpoint, 45)
+
+            center_offset_y = int(diameter * 0.05)
+            center_offset_x = int(diameter * 0.40)
+
+            coord3 = centerpoint[1] - center_offset_x
+            coord4 = centerpoint[1] + center_offset_x
+            coord1 = centerpoint[0] - center_offset_y
+            coord2 = centerpoint[0] + center_offset_y
+
+
+            center_cutout = imagedata[coord1:coord2,coord3:coord4]
+            return center_cutout
+        
+        def measureLength(imagedata, spacing=1):
+            thld = utilFunc.getThreshold.otsuMethod(imagedata) 
+
+            rowsum = np.sum(utilFunc.createThresholdImage(imagedata, thld),axis=1)
+            rowsum_conv = np.abs(np.convolve(rowsum,[1,-1],"valid"))
+            a = rowsum_conv.shape[0]
+            b = int(a*0.25)
+            border = np.where(rowsum_conv == np.max(rowsum_conv[b:-b]))[0][0] +1  # Edgecase fixen mit 2 minima/was wenn beide gleich lang. Idee: bei fehlschlag einfach mitte nehmen.
+
+            upperhalf = imagedata[:border]
+            lowerhalf = imagedata[border+1:]
+
+            upperthldimg = utilFunc.createThresholdImage(upperhalf,thld)
+            lowerthldimg = utilFunc.createThresholdImage(lowerhalf,thld)
+
+            upperBorder = np.where(np.sum(upperthldimg, axis=0) > (max(np.sum(upperthldimg, axis=0)))/2)
+            lowerBorder = np.where(np.sum(lowerthldimg, axis=0) > (max(np.sum(lowerthldimg, axis=0)))/2)
+
+            upperLength = np.max(upperBorder) - np.min(upperBorder)
+            lowerLength = np.max(lowerBorder) - np.min(lowerBorder)
+            meanLength = 0.2 * (upperLength * lowerLength) / (upperLength + lowerLength) * spacing
+
+
+
+            return meanLength, (np.max(upperBorder),np.min(upperBorder),np.max(lowerBorder),np.min(lowerBorder)), border
+
+    class spa:
+        def getPositionDifference(thldimage, centerCoord, showplot=False):
+            
+            diameter, _ = functions.ga.measureDistance(thldimage,centerCoord,0)
+            x1_offset = centerCoord[1] - int(diameter*0.02)
+            x2_offset = centerCoord[1] + int(diameter*0.02)
+            # y_offset = centerCoord[0] - int(diameter*0.25)
+
+            imgROI = thldimage[centerCoord[0] - int(diameter*0.4):centerCoord[0] - int(diameter*0.25),:]
+            line1 = np.sum(imgROI[:,x1_offset])
+            line2 = np.sum(imgROI[:,x2_offset])
+            lengthDifference = line1 - line2
+
+            print(lengthDifference)
+            if showplot:
+                plt.axvline(centerCoord[1])
+                plt.axvline(x1_offset, linestyle="dotted")
+                plt.axvline(x2_offset, linestyle="dotted")
+                plt.imshow(imgROI)
+                plt.show()
+
+            return lengthDifference, imgROI, (x1_offset,x2_offset)

@@ -20,7 +20,7 @@ class francisAnalyzer:
     def resolution(self, showplot=False, savefig=False):
         
         # Interpolation for smoother lines
-        img = utilfunc.interpolateImage(self.imagedata[4])
+        img = utilfunc.interpolateImage(self.imagedata[2])
 
         # Initial location of centerpoint
         thld = int(0.8 * utilfunc.getThreshold.findPeak(img,11))
@@ -74,26 +74,25 @@ class francisAnalyzer:
 
     def low_contrast(self, showplot=False, savefig=False):
 
-        img = utilfunc.interpolateImage(self.imagedata[8])
+        img = utilfunc.interpolateImage(self.imagedata[4])
 
-        thld = int(0.8 * utilfunc.getThreshold.findPeak(img,11))
+        thld = int(utilfunc.getThreshold.findPeak(img,10))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
-        
-        count = []
+
         images = []
-        spokes = []
-        
+
         ## Cutout center and get appropiate masks
         mask = utilfunc.cutoutStructureMask(thld_img, centerpoint)
+        mask = utilfunc.removeHoles(thld_img)
         thldMaskedImg = np.ma.masked_array(thld_img, mask)
 
         ## Data for mask
-        center_new = utilfunc.findCenter.centerOfMass(~mask)
-        diameter = utilfunc.measureDistance(~mask,center_new,0)
+        center_new = utilfunc.findCenter.centerOfMass(mask)
+        diameter = utilfunc.measureDistance(mask,center_new,0,[1,1])
         radius = diameter/2
 
-        circMask = utilfunc.circularROI(img, center_new,radius)
+        circMask = utilfunc.circularROI(img, center_new,int(0.65*radius), True)
 
         # Actual Computation
         cutoutImage = np.ma.masked_array(img, circMask)
@@ -129,7 +128,7 @@ class francisAnalyzer:
         self.res_LCOD = countedSpokes
 
     def uniformity(self, showplot=False, savefig=False):
-        img = self.imagedata[0]
+        img = self.imagedata[8]
         thld = int(0.8 * utilfunc.getThreshold.otsuMethod(img))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
@@ -159,15 +158,17 @@ class francisAnalyzer:
         self.res_IIU = 100 * (1-(maxValue-minValue)/(maxValue+minValue))
 
     def thickness(self, showplot=False, savefig=False):
-        
+        img = self.imagedata[6]
+        rectimg = francisfunc.sta.cutoutRect(img)
+        test = francisfunc.sta.measureLength(rectimg)
         pass
 
     def position(self, showplot=False, savefig=False):
-        
+
         pass
 
     def grid(self, showplot=False, savefig=False):
-        img = self.imagedata[2]
+        img = self.imagedata[0]
         img_grid_pre = francisfunc.grid.cutoutSquare(img)
 
         img_grid = francisfunc.grid.imagePreProcessing(img_grid_pre, False)
@@ -183,10 +184,10 @@ class francisAnalyzer:
         self.res_Grid_angle = np.rad2deg(angle_cross)
 
     def size(self, showplot=False, savefig=False):
-        img = self.imagedata[4]
+        img = self.imagedata[2]
 
         # Initial location of centerpoint
-        thld = int(utilfunc.getThreshold.otsuMethod(img))
+        thld = int(0.8 * utilfunc.getThreshold.findPeak(img,10))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
@@ -196,6 +197,7 @@ class francisAnalyzer:
         tmp_center_thldImg = thld_img.copy()
         tmp_center_thldImg[centermask] = 0
         centerpoint = utilfunc.findCenter.centerOfMass(tmp_center_thldImg)
+
 
         measureResults1 = francisfunc.ga.measureDistance(thld_img, centerpoint,  45, self.spacing)
         measureResults2 = francisfunc.ga.measureDistance(thld_img, centerpoint, -45, self.spacing)
