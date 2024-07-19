@@ -1,8 +1,11 @@
 from .utils.methods import functions as utilfunc
 from .francis.methods import functions as francisfunc
 
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+from fpdf import FPDF
 
 class francisAnalyzer:
     def __init__(self, data) -> None:
@@ -11,11 +14,34 @@ class francisAnalyzer:
         self.metadata = data.metadata if hasattr(data, 'metadata') else None
         self.spacing = self.metadata[0x52009230][0][0x00289110][0][0x00280030].value
 
-        self.res_RES = None
-        self.res_RES_SD = None
-        self.res_LCOD = None
-        self.res_IIU = None
-        self.res_STA = None
+
+        self.res_RES = None         # Resolution
+        self.res_RES_SD = None      # Resolution SD
+        self.res_GA = None          # Geometric lenghts
+        self.res_GA_SD = None       # Geometric lengths SD
+        self.res_LCOD = None        # Low contrast
+        self.res_IIU = None         # Image uniformity
+        self.res_STA = None         # Slice thickness
+        self.res_SPA = None         # Slice position
+        self.res_Grid_size = None   # Grid size
+        self.res_Grid_angle = None  # Grid angle
+        self.res_Ghosting = None    # Percent Ghosting Ratio
+
+        self.results = []
+
+        self.criteria = {
+            "Resolution": {"min": 0.8, "max": 1.2},
+            "ResolutionSD": {"max": 2},
+            "Diameter": {"min": 142,"max": 148},
+            "Diameter SD": {"max": 2},
+            "Low Contrast": {"min": 6},
+            "Image Uniformity": {"min": 80},
+            "Slice Thickness": {"min": 4, "max": 6},
+            "Slice Position": {"min":-4,"max": 4},
+            "Grid Angle": {"min": 87,"max": 93},
+            "Grid Size": {"min":28, "max": 44},
+            "Ghosting": {"max": 5}
+        }
 
     def resolution(self, showplot=False, savefig=False):
         
@@ -67,9 +93,10 @@ class francisAnalyzer:
                 plt.show()
             elif savefig:
                 plt.savefig("francis_res.png")
+                plt.close()
         
-        self.res_RES = (5 - (np.mean(longestLength)/50 * 5))*2
-        self.res_RES_SD = (5 - (np.std(longestLength)/50 * 5))*2
+        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2,2)
+        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2,2)
         return
 
     def low_contrast(self, showplot=False, savefig=False):
@@ -92,7 +119,7 @@ class francisAnalyzer:
         diameter = utilfunc.measureDistance(mask,center_new,0,[1,1])
         radius = diameter/2
 
-        circMask = utilfunc.circularROI(img, center_new,int(0.65*radius), True)
+        circMask = utilfunc.circularROI(img, center_new,int(0.65*radius))
 
         # Actual Computation
         cutoutImage = np.ma.masked_array(img, circMask)
@@ -112,7 +139,7 @@ class francisAnalyzer:
 
         if showplot or savefig:
             plt.subplot(121)
-            plt.imshow(img)
+            plt.imshow(cutoutImage)
 
             plt.subplot(122)
             plt.imshow(lineArraysByAngle)
@@ -122,7 +149,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if savefig:
-                plt.savefig("test5.png")
+                plt.savefig("francis_contrast.png")
                 plt.close()
         
         self.res_LCOD = countedSpokes
@@ -154,17 +181,49 @@ class francisAnalyzer:
                 plt.show()
             if savefig:
                 plt.savefig("francis_uniformity.png")
+                plt.close()
 
-        self.res_IIU = 100 * (1-(maxValue-minValue)/(maxValue+minValue))
+        self.res_IIU = np.round(100 * (1-(maxValue-minValue)/(maxValue+minValue)),2)
 
     def thickness(self, showplot=False, savefig=False):
         img = self.imagedata[6]
-        rectimg = francisfunc.sta.cutoutRect(img)
-        test = francisfunc.sta.measureLength(rectimg)
+        rect_img = francisfunc.sta.cutoutRect(img)
+
+        length, coords, border = francisfunc.sta.measureLength(rect_img, self.spacing[1]) # Anstatt image border einsetzen.
+        self.res_STA = np.round(length,2)
+
+        if showplot or print:
+            y_half = rect_img.shape[0]/2
+            plt.vlines(coords[0],ymin=0,ymax=y_half)
+            plt.vlines(coords[1],ymin=0,ymax=y_half)
+            plt.vlines(coords[2],ymin=y_half,ymax=y_half*2, color="red")
+            plt.vlines(coords[3],ymin=y_half,ymax=y_half*2, color="red")
+            plt.imshow(rect_img, cmap="bone")
+            if showplot:
+                plt.show()
+            if savefig:
+                plt.savefig("francis_thickness.png")
+                plt.close()
         pass
 
     def position(self, showplot=False, savefig=False):
+        img = self.imagedata[6]
+        rectimg = francisfunc.spa.cutoutRect(img)
+        length_diff, lengths = francisfunc.spa.getPositionDifference(rectimg)
 
+        if showplot or savefig:
+            plt.imshow(rectimg)
+            plt.hlines(lengths[0]-0.5 ,0,int(rectimg.shape[1]/2))
+            plt.hlines(lengths[1]-0.5,int(rectimg.shape[1]/2), rectimg.shape[1]-1)
+            plt.vlines(int(rectimg.shape[1]/2), lengths[0]-0.5, lengths[1]-0.5, colors="red")
+            if showplot:
+                plt.show()
+            elif savefig:
+                plt.savefig("francis_position")
+                plt.close()
+
+        self.res_SPA = np.round(length_diff * self.spacing[0],2)
+        
         pass
 
     def grid(self, showplot=False, savefig=False):
@@ -180,8 +239,8 @@ class francisAnalyzer:
 
         francisfunc.grid.printImage(img_grid_pre, lines, showplot, savefig)
 
-        self.res_Grid_size = squaresize
-        self.res_Grid_angle = np.rad2deg(angle_cross)
+        self.res_Grid_size = np.round(squaresize,2)
+        self.res_Grid_angle = np.round(np.rad2deg(angle_cross),2)
 
     def size(self, showplot=False, savefig=False):
         img = self.imagedata[2]
@@ -218,3 +277,164 @@ class francisAnalyzer:
         self.res_GA = np.round(np.mean([measureResults1[0], measureResults2[0]]),2)
         self.res_GA_SD = np.round(np.std([measureResults1[0], measureResults2[0]]),2)
         return
+
+    def ghosting(self, showplot=False, print=False):
+        thld = utilfunc.getThreshold.findPeak(self.imagedata[8],10)
+        thldimg = utilfunc.createThresholdImage(self.imagedata[8], thld/2)
+        center = utilfunc.findCenter.centerOfMassFilled(thldimg)
+
+        result, imagemasks, data = francisfunc.psg.calcPSG(self.imagedata[8],thldimg, center)
+
+        resultText = f"center:{data[0]}\ntop:{data[1]}\nbot:{data[3]}\nright:{data[2]}\nleft:{data[4]}"
+
+        if showplot or print:
+            plt.imshow(self.imagedata[8], cmap="bone")
+            for i in imagemasks:
+                plt.imshow(np.ma.masked_array(self.imagedata[8], i))
+            plt.gcf().text(0.81, 0.5, resultText, fontsize=10)
+            if showplot:
+                plt.show()
+            if print:
+                plt.savefig("francis_ghosting.png")
+                plt.close()
+
+        self.res_Ghosting = np.round(100 * result, 2)
+        return
+
+    def _organize_data(self):
+        header = ["Date of measurement",
+                  "Time of Measurement",
+                  "Resolution",
+                  "ResolutionSD",
+                  "Geometric Accuracy",
+                  "Geometric Accuracy SD",
+                  "Low Contrast",
+                  "Image Uniformity",
+                  "Slice Thickness",
+                  "Slice Position",
+                  "Grid Angle",
+                  "Grid Size",
+                  "Ghosting"
+                  ]
+        self.results.append(header)
+        
+        data = [f"{self.metadata[0x00080020].value}",
+                f"{self.metadata[0x00080031].value}",
+                f"{self.res_RES}",
+                f"{self.res_RES_SD}",
+                f"{self.res_GA}",
+                f"{self.res_GA_SD}",
+                f"{self.res_LCOD}",
+                f"{self.res_IIU}",
+                f"{self.res_STA}",
+                f"{self.res_SPA}",
+                f"{self.res_Grid_angle}",
+                f"{self.res_Grid_size}",
+                f"{self.res_Ghosting}"
+                ]
+
+        self.results.append(data)
+
+    def add2csv(self):
+
+        self._organize_data()
+        
+        # Create a CSV file
+        csv_filename = f'{self.metadata[0x00080080].value}.csv'
+        write_header = not os.path.isfile(csv_filename)
+        
+        with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            if write_header:
+                header = self.results[0]  # assuming self.results[0] is a list of headers
+                csv_writer.writerow(header)
+            writedata = self.results[1]  # assuming self.results[1] is a list of data
+            csv_writer.writerow(writedata)
+
+    def _check_criteria(self, test_name, value):
+        criteria = self.criteria.get(test_name)
+        if not criteria:
+            return False
+
+        if "min" in criteria and value <= criteria["min"]:
+            return False
+        if "max" in criteria and value >= criteria["max"]:
+            return False
+
+        return True
+
+
+    def create_report(self):
+        # Initialize the PDF
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # Add a title page
+        pdf.add_page()
+        pdf.set_font("Arial", size=24)
+        pdf.cell(200, 10, "Francis Analyzer Report", ln=True, align='C')
+
+        # Add summary table
+        pdf.set_font("Arial", size=12)
+        pdf.ln(20)  # Add some space
+        pdf.set_font("Arial", size=16)
+        pdf.cell(200, 10, "Summary Table", ln=True, align='L')
+        pdf.set_font("Arial", size=12)
+
+        pdf.cell(40, 10, "Test", 1)
+        pdf.cell(40, 10, "Result", 1)
+        pdf.cell(40, 10, "Criteria", 1)
+        pdf.cell(40, 10, "Pass/Fail", 1)
+        pdf.ln()
+
+        results_mapping = {
+            "Resolution": (self.res_RES, "0.8 - 1.2 mm", "mm"),
+            "Resolution SD": (self.res_RES_SD, "< 2 mm", "mm"),
+            "Diameter": (self.res_GA, "142 - 148 mm", "mm"),
+            "Diameter SD": (self.res_GA_SD, "< 2 mm", "mm"),
+            "Low Contrast": (self.res_LCOD, "> 6 spokes", "spokes"),
+            "Image Uniformity": (self.res_IIU, "> 80%", "%"),
+            "Slice Thickness": (self.res_STA, "4 - 6 mm", "mm"),
+            "Slice Position": (self.res_SPA, "-4 to 4 mm", "mm"),
+            "Grid Angle": (self.res_Grid_angle, "87 - 93 degrees", "degrees"),
+            "Grid Size": (self.res_Grid_size, "28 - 44 mm2", "mm2"),
+            "Ghosting": (self.res_Ghosting, "< 5%", "%")
+        }
+
+        for key, value in results_mapping.items():
+            result, criteria, unit = value
+            pass_fail = "Pass" if self._check_criteria(key, result) else "Fail"
+            pdf.cell(40, 10, key, 1)
+            pdf.cell(40, 10, f"{result} {unit}", 1)
+            pdf.cell(40, 10, criteria, 1)
+            pdf.cell(40, 10, pass_fail, 1)
+            pdf.ln()
+
+        # Add each result with its corresponding image
+        pdf.set_font("Arial", size=12)
+
+        results_mapping_with_images = {
+            "Resolution": ("francis_res.png", [("Resolution", self.res_RES, "mm"), ("Resolution SD", self.res_RES_SD, "mm")]),
+            "Geometric Accuracy": ("francis_size.png", [("Diameter", self.res_GA, "mm"), ("Diameter SD", self.res_GA_SD, "mm")]),
+            "Low Contrast": ("francis_contrast.png", [("Low Contrast", self.res_LCOD, "spokes")]),
+            "Image Uniformity": ("francis_uniformity.png", [("Image Uniformity", self.res_IIU, "%")]),
+            "Slice Thickness": ("francis_thickness.png", [("Slice Thickness", self.res_STA, "mm")]),
+            "Slice Position": ("francis_position.png", [("Slice Position", self.res_SPA, "mm")]),
+            "Grid": ("francis_grid.png", [("Grid Size", self.res_Grid_size, "mm2"), ("Grid Angle", self.res_Grid_angle, "degrees")]),
+            "Ghosting": ("francis_ghosting.png", [("Ghosting", self.res_Ghosting, "%")])
+        }
+
+        for key, value in results_mapping_with_images.items():
+            image, metrics = value
+            pdf.add_page()
+            pdf.set_font("Arial", size=16)
+            pdf.cell(200, 10, key, ln=True, align='L')
+            pdf.image(image, x=80, y=20, w=120)
+            # pdf.set_xy(20, 30)
+            pdf.ln(20)
+            pdf.set_font("Arial", size=12)
+            for metric_name, metric_value, unit in metrics:
+                pdf.cell(200, 10, f"{metric_name}: {metric_value} {unit}", ln=True)
+
+        # Save the PDF
+        pdf.output(f"{self.metadata[0x00080080].value}_report.pdf")

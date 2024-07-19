@@ -165,16 +165,6 @@ karo_qa/utils/__pycache__/
 karo_qa/__pycache__/
 __pycache__/
 
-test.png
-test1.png
-test2.png
-test5.png
-test4.png
-test3.png
-test6.png
-
-Karolinska Huddinge MR1.csv
-Karolinska Huddinge MR2.csv
-Karolinska Huddinge MR3.csv
-Karolinska Huddinge MR4.csv
-Karolinska Huddinge MR5.csv
+*.png
+*.csv
+*.pdf

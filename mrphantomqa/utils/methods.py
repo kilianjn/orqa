@@ -211,7 +211,7 @@ class functions:
 
         temp = flood_fill(thldimg, startpoint, 2)
         mask = temp == 2
-        mask = ndimage.binary_fill_holes(mask)
+        # mask = ndimage.binary_fill_holes(mask)
         if showplot:
             plt.scatter(startpoint[1], startpoint[0])
             plt.imshow(np.ma.masked_array(thldimg, ~mask))

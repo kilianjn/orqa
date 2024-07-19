@@ -1,8 +1,7 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-
-from collections import Counter
+from scipy import ndimage
 
 #Debugging
 import mrphantomqa.utils.viewer as viw
@@ -335,6 +334,7 @@ class functions:
                     plt.show()
                 if savefig:
                     plt.savefig("francis_grid.png")
+                    plt.close()
             
             return None
         
@@ -349,10 +349,10 @@ class functions:
             center_offset_y = int(diameter * 0.05)
             center_offset_x = int(diameter * 0.40)
 
-            coord3 = centerpoint[1] - center_offset_x
-            coord4 = centerpoint[1] + center_offset_x
             coord1 = centerpoint[0] - center_offset_y
             coord2 = centerpoint[0] + center_offset_y
+            coord3 = centerpoint[1] - center_offset_x
+            coord4 = centerpoint[1] + center_offset_x
 
 
             center_cutout = imagedata[coord1:coord2,coord3:coord4]
@@ -385,24 +385,83 @@ class functions:
             return meanLength, (np.max(upperBorder),np.min(upperBorder),np.max(lowerBorder),np.min(lowerBorder)), border
 
     class spa:
-        def getPositionDifference(thldimage, centerCoord, showplot=False):
-            
-            diameter, _ = functions.ga.measureDistance(thldimage,centerCoord,0)
-            x1_offset = centerCoord[1] - int(diameter*0.02)
-            x2_offset = centerCoord[1] + int(diameter*0.02)
-            # y_offset = centerCoord[0] - int(diameter*0.25)
+        def cutoutRect(imagedata):
+            thld = utilFunc.getThreshold.otsuMethod(imagedata)
+            thld_img = utilFunc.createThresholdImage(imagedata, thld)
+            centerpoint = utilFunc.findCenter.centerOfMassFilled(thld_img)
 
-            imgROI = thldimage[centerCoord[0] - int(diameter*0.4):centerCoord[0] - int(diameter*0.25),:]
-            line1 = np.sum(imgROI[:,x1_offset])
-            line2 = np.sum(imgROI[:,x2_offset])
-            lengthDifference = line1 - line2
+            diameter = np.mean([utilFunc.measureDistance(thld_img, centerpoint, i) for i in [45, 135]])
+            coord_divider = (centerpoint[0] - int(0.4*diameter),centerpoint[1])
 
-            print(lengthDifference)
+            thld_img_ring = ~utilFunc.cutoutStructureMask(thld_img, coord_divider)
+
+            center_offset_y = int(diameter * 0.03)
+            center_offset_x = int(diameter * 0.07)
+
+            coord1 = coord_divider[0] - (1 * center_offset_y)
+            coord2 = coord_divider[0] + (5 * center_offset_y)
+            coord3 = coord_divider[1] - center_offset_x
+            coord4 = coord_divider[1] + center_offset_x
+
+
+            center_cutout = thld_img_ring[coord1:coord2,coord3:coord4]
+            return center_cutout
+        
+
+        def getPositionDifference(thldimage, showplot=False):
+            column_sum = np.sum(thldimage, axis=0)
+
+            midpoint = int(column_sum.shape[0] / 2)
+            midpoint_offset = int(column_sum.shape[0] * 0.1)
+
+            length_left  = np.median(column_sum[:midpoint-midpoint_offset])
+            length_right = np.median(column_sum[midpoint+midpoint_offset:])
+
+            diff_in_pix = length_left - length_right
             if showplot:
-                plt.axvline(centerCoord[1])
-                plt.axvline(x1_offset, linestyle="dotted")
-                plt.axvline(x2_offset, linestyle="dotted")
-                plt.imshow(imgROI)
+                plt.imshow(thldimage)
+                plt.hlines(length_left ,0,midpoint-midpoint_offset)
+                plt.hlines(length_right,midpoint+midpoint_offset, column_sum.shape[0]-1)
+                plt.vlines(midpoint, length_left, length_right, colors="red")
                 plt.show()
 
-            return lengthDifference, imgROI, (x1_offset,x2_offset)
+            return diff_in_pix, [length_left,length_right]
+        
+    class psg:
+        """Percent-Signal-Ghosting"""
+        def calcPSG(imagedata, thldimg, center, showplot=False):
+            radius,_ = functions.ga.measureDistance(thldimg,center,0)
+            radius /= 2
+            centermask = utilFunc.circularROI(imagedata, center, 0.8*radius)
+
+            spaceTop = imagedata.shape[0] - center[0] - radius
+            spaceBot = center[0] - radius
+            spaceRight = imagedata.shape[1] - center[1] - radius
+            spaceLeft = center[1] - radius
+            ellipseRadius = np.min([spaceBot,spaceLeft,spaceRight,spaceBot])
+
+            topmask = utilFunc.circularROI(imagedata, center, ellipseRadius/2,False,0,radius + 1.3 * spaceTop/2,2,0.5)
+            botmask = utilFunc.circularROI(imagedata, center, ellipseRadius/2,False,0,-(radius + 1.3 * spaceBot/2),2,0.5)
+            rightmask = utilFunc.circularROI(imagedata, center, ellipseRadius/2,False,radius + 1.3 * spaceRight/2,0,0.5,2)
+            leftmask = utilFunc.circularROI(imagedata, center, ellipseRadius/2,False,-(radius + 1.3 * spaceLeft/2),0,0.5,2)
+
+            meantop = np.round(np.mean(np.ma.masked_array(imagedata,topmask)),2)
+            meanbot = np.round(np.mean(np.ma.masked_array(imagedata,botmask)),2)
+            meanleft = np.round(np.mean(np.ma.masked_array(imagedata,leftmask)),2)
+            meanright = np.round(np.mean(np.ma.masked_array(imagedata,rightmask)),2)
+            meancenter = np.round(np.mean(np.ma.masked_array(imagedata,centermask)),2)
+
+            ghostingPercentRatio = 100 * np.abs(((meantop+meanbot)-(meanleft+meanright))/(2*meancenter))
+
+            test= np.ma.mask_or(~topmask,~botmask)
+            test1= np.ma.mask_or(~leftmask,~rightmask)
+            test= np.ma.mask_or(test,test1)
+
+            if showplot:
+                plt.imshow(np.ma.masked_array(imagedata), cmap="bone")
+                plt.imshow(np.ma.masked_array(imagedata,~test))
+                plt.show()
+            # print(ghostingPercentRatio)
+
+            return ghostingPercentRatio, [centermask,~test], (meancenter, meantop, meanright, meanbot, meanleft)
+  
