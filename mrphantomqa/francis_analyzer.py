@@ -95,8 +95,8 @@ class francisAnalyzer:
                 plt.savefig("francis_res.png")
                 plt.close()
         
-        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2,2)
-        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2,2)
+        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2, 2)
+        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2, 2)
         return
 
     def low_contrast(self, showplot=False, savefig=False):
@@ -139,6 +139,7 @@ class francisAnalyzer:
 
         if showplot or savefig:
             plt.subplot(121)
+            plt.imshow(img, cmap="gray")
             plt.imshow(cutoutImage)
 
             plt.subplot(122)
@@ -173,6 +174,7 @@ class francisAnalyzer:
 
         maxValue, minValue, maxCoord, minCoord = francisfunc.iiu.searchForCircularSpots(convolvedMaskedImg)
         if showplot or savefig:
+            plt.imshow(img, cmap="gray")
             plt.imshow(convolvedMaskedImg)
             plt.scatter(maxCoord[1],maxCoord[0],facecolors='none',edgecolors='r', s=10**2, label=f"max: {maxValue}")
             plt.scatter(minCoord[1],minCoord[0],facecolors='none',edgecolors='b', s=10**2, label=f"min: {minValue}")

@@ -174,7 +174,7 @@ class functions:
             relevantAngles.append([189,203])
             relevantAngles.append([235,246])
             relevantAngles.append([280,291])
-            relevantAngles.append([330,341])
+            relevantAngles.append([325,336])
 
             distances = []
             for j in range(5): # Divide in 3 areas for peaks
