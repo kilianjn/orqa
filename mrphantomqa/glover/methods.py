@@ -2,6 +2,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+from ..utils.methods import functions as utilFunc
 
 class functions:
     @staticmethod

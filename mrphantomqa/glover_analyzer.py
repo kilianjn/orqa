@@ -123,7 +123,7 @@ class gloverAnalyzer:
     @property
     def residualsSVsFT(self):
         if self._residualsSVsFT is None:
-            self._residualsSVsFT = np.abs(np.fft.fft(self.residualsSVs))
+            self._residualsSVsFT = np.abs(np.fft.fftshift(np.fft.fft(self.residualsSVs)))
         return self._residualsSVsFT
     
     @property

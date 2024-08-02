@@ -439,4 +439,4 @@ class francisAnalyzer:
                 pdf.cell(200, 10, f"{metric_name}: {metric_value} {unit}", ln=True)
 
         # Save the PDF
-        pdf.output(f"{self.metadata[0x00080080].value}_report.pdf")
+        pdf.output(f"{self.metadata[0x00080080].value}_QAreport.pdf")
