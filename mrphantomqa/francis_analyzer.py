@@ -3,33 +3,35 @@ from .francis.methods import functions as francisfunc
 
 import csv
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 import os
+from datetime import datetime
 from fpdf import FPDF
 
 class francisAnalyzer:
     def __init__(self, data) -> None:
-        # self.imagedata_loc = data.imagedata[0]
-        self.imagedata = data.imagedata[0]
-        self.metadata = data.metadata if hasattr(data, 'metadata') else None
-        self.spacing = self.metadata[0x52009230][0][0x00289110][0][0x00280030].value
+        self.imagedata      = data.imagedata[0]
+        self.metadata       = data.metadata if hasattr(data, 'metadata') else None
 
+        self.scannername    = self.metadata[0x00080080].value
+        self.creationdate   = self.metadata[0x00080012].value
+        self.spacing        = self.metadata[0x52009230][0][0x00289110][0][0x00280030].value
 
-        self.res_RES = None         # Resolution
-        self.res_RES_SD = None      # Resolution SD
-        self.res_GA = None          # Geometric lenghts
-        self.res_GA_SD = None       # Geometric lengths SD
-        self.res_LCOD = None        # Low contrast
-        self.res_IIU = None         # Image uniformity
-        self.res_STA = None         # Slice thickness
-        self.res_SPA = None         # Slice position
-        self.res_Grid_size = None   # Grid size
+        self.res_RES        = None  # Resolution
+        self.res_RES_SD     = None  # Resolution SD
+        self.res_GA         = None  # Geometric lenghts
+        self.res_GA_SD      = None  # Geometric lengths SD
+        self.res_LCOD       = None  # Low contrast
+        self.res_IIU        = None  # Image uniformity
+        self.res_STA        = None  # Slice thickness
+        self.res_SPA        = None  # Slice position
+        self.res_Grid_size  = None  # Grid size
         self.res_Grid_angle = None  # Grid angle
-        self.res_Ghosting = None    # Percent Ghosting Ratio
+        self.res_Ghosting   = None  # Percent Ghosting Ratio
 
-        self.results = []
-
-        self.criteria = {
+        self.results        = []
+        self.criteria       = {
             "Resolution": {"min": 0.8, "max": 1.2},
             "ResolutionSD": {"max": 2},
             "Diameter": {"min": 142,"max": 148},
@@ -42,6 +44,8 @@ class francisAnalyzer:
             "Grid Size": {"min":28, "max": 44},
             "Ghosting": {"max": 5}
         }
+
+        self.longtermdata = {}
 
     def resolution(self, showplot=False, savefig=False):
         
@@ -342,7 +346,7 @@ class francisAnalyzer:
         self._organize_data()
         
         # Create a CSV file
-        csv_filename = f'{self.metadata[0x00080080].value}.csv'
+        csv_filename = f'{self.scannername}.csv'
         write_header = not os.path.isfile(csv_filename)
         
         with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
@@ -352,6 +356,7 @@ class francisAnalyzer:
                 csv_writer.writerow(header)
             writedata = self.results[1]  # assuming self.results[1] is a list of data
             csv_writer.writerow(writedata)
+
 
     def _check_criteria(self, test_name, value):
         criteria = self.criteria.get(test_name)
@@ -364,7 +369,6 @@ class francisAnalyzer:
             return False
 
         return True
-
 
     def create_report(self):
         # Initialize the PDF
@@ -439,4 +443,85 @@ class francisAnalyzer:
                 pdf.cell(200, 10, f"{metric_name}: {metric_value} {unit}", ln=True)
 
         # Save the PDF
-        pdf.output(f"{self.metadata[0x00080080].value}_QAreport.pdf")
+        pdf.output(f"{self.scannername}_{self.creationdate}_QAreport.pdf")
+
+    def _readcsv(self):
+        csv_filename = f'{self.scannername}.csv'
+        with open(csv_filename, 'r') as file:
+            reader = csv.DictReader(file)
+            # Collect all rows in a list
+            rows = [row for row in reader]
+            # Sort rows by the 'Date of measurement' column
+            rows = sorted(rows, key=lambda row: row['Date of measurement'])
+
+            for row in rows:
+                for column in reader.fieldnames:
+                    if column in row:
+                        if column not in self.longtermdata:
+                            self.longtermdata[column] = []
+                        self.longtermdata[column].append(row[column])
+
+
+    def create_longterm_report(self):
+        self._readcsv()
+
+        tests = {   "Resolution":           [0.3,2  ],
+                    "Geometric Accuracy":   [140,150],
+                    "Low Contrast":         [0  ,9  ],
+                    "Image Uniformity":     [0  ,100],
+                    "Slice Thickness":      [0  ,10 ],
+                    "Slice Position":       [-5 ,5  ],
+                    "Grid Size":            [28 ,44 ],
+                    "Ghosting":             [0  ,100]
+        }
+
+        
+        for testname in tests.keys():
+            xdata_raw = self.longtermdata["Date of measurement"]
+            dates = [datetime.strptime(date, '%Y%m%d') for date in xdata_raw]
+            ydata = [float(i) for i in self.longtermdata[testname]]
+
+            # Plot the data
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+            plt.gcf().autofmt_xdate()  # Auto format date labels
+            plt.plot(dates, ydata, marker='o')
+            plt.ylim(tests[testname])
+            # plt.ylim([0,10])
+
+            # Adding titles and labels
+            plt.title(f'Longitudinal plot for {testname}')
+            plt.ylabel('Testresult')
+
+            # Show the plot
+            # plt.show()
+            # Save figure
+            plt.savefig(f"Longterm_{testname}.png")
+            plt.close()
+
+        
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # # Add a title page
+        # pdf.add_page()
+        # pdf.set_font("Arial", size=24)
+        # pdf.cell(200, 10, "Francis longterm Report", ln=True, align='C')
+
+        pdf.set_font("Arial", size=12)
+        x_offset = 10
+        y_offset = 30
+        width = 90
+        height = 70
+
+        for i, testname in enumerate(tests.keys()):
+            if i % 3 == 0:
+                pdf.add_page()
+                y_offset = 30
+            pdf.image(f"Longterm_{testname}.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.set_xy(x_offset, y_offset + height + 5)
+            # pdf.cell(200, 100, testname, ln=True)
+            y_offset += height + 20
+        
+        pdf.output(f'{self.scannername}_longterm_report.pdf')
+        pass

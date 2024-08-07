@@ -116,6 +116,7 @@ class functions:
 
             sig_b = np.round(w_0 * w_1 * (mu_0 - mu_1)**2).astype(int)
             threshold = np.mean(np.where(sig_b == np.max(sig_b))).astype(int) + startpoint
+
             return threshold
 
     def getHistogram(imagedata, showplot=False):

@@ -404,8 +404,10 @@ class functions:
             coord4 = coord_divider[1] + center_offset_x
 
 
-            center_cutout = thld_img_ring[coord1:coord2,coord3:coord4]
-            return center_cutout
+            center_cutout = imagedata[coord1:coord2,coord3:coord4]
+            thld_rect = utilFunc.getThreshold.otsuMethod(center_cutout)
+            cutoutrect = utilFunc.createThresholdImage(center_cutout,thld_rect)
+            return cutoutrect
         
 
         def getPositionDifference(thldimage, showplot=False):
