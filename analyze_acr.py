@@ -23,5 +23,5 @@ analyzer.low_contrast_object_detectibility("edges1", False, True) # Done.
 analyzer.slice_thickness_accuracy(False, True) # Done.
 
 analyzer.get_results()
-# analyzer.createReport()
+analyzer.createReport()
 # analyzer.add2csv()

@@ -15,7 +15,7 @@ class functions:
         def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
             """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
             as length between the first and last 1 along the line in the picture."""
-            assert len(np.unique(imagedata)) == 2,"Image values must be binary"
+            assert len(np.unique(imagedata.data)) == 2,"Image values must be binary"
             # imagedata = imagedata.astype(int)
             spacing_y, spacing_x = spacing
             y_startpoint, x_startpoint = startpoint
@@ -432,7 +432,7 @@ class functions:
 
         def countEdges1(edgeImage, showplot=False):
             allAngles, length = edgeImage.shape
-            countThld = np.mean(edgeImage) + 2 * np.std(edgeImage)
+            countThld = np.mean(edgeImage) + 1.5 * np.std(edgeImage)
 
             peakcount = np.zeros((allAngles,6)) # per angle positive and negative threshold
             countedSpokes = 0

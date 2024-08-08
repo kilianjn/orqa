@@ -33,7 +33,7 @@ class functions:
             return np.round(com_y).astype(int), np.round(com_x).astype(int)
         
         def centerOfMassFilled(thldimage, showplot=False):
-            assert len(np.unique(thldimage)) == 2,"Image values must be binary"
+            assert len(np.unique(thldimage.data)) == 2,"Image values must be binary"
             com_x = 0
             com_y = 0
             y_ax, x_ax = thldimage.shape
@@ -189,6 +189,7 @@ class functions:
         get rectangle boundariers of given thld image: min_row, max_row, min_col, max_col 
         """
         assert len(np.unique(imagedata)) == 2,"Image values must be binary"
+        imagedata = imagedata.astype(int)
         coordinates = None
 
         temp = flood_fill(imagedata, startpoint, 2)
@@ -208,7 +209,7 @@ class functions:
     def cutoutStructureMask(thldimg, startpoint,showplot=False):
         """creates mask in binary image using floodfill and filles holes in mask"""
         assert len(np.unique(thldimg)) == 2,"Image values must be binary"
-        coordinates = None
+        thldimg = thldimg.astype(int)
 
         temp = flood_fill(thldimg, startpoint, 2)
         mask = temp == 2
