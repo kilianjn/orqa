@@ -36,7 +36,7 @@ class francisAnalyzer:
                               "Resolution":       {"min": 0.8, "max": 1.2},
                               "ResolutionSD":     {"max": 2},
                               "Diameter":         {"min": 142,"max": 148},
-                              "Diameter SD":      {"max": 2},
+                              "DiameterSD":      {"max": 2},
                               "Low Contrast":     {"min": 6},
                               "Image Uniformity": {"min": 80},
                               "Slice Thickness":  {"min": 4, "max": 6},
@@ -374,18 +374,29 @@ class francisAnalyzer:
         pdf.cell(40, 10, "Pass/Fail", 1)
         pdf.ln()
 
-        results_mapping = {
-            "Resolution":       (self.res_RES,          f"0.8 - 1.2 mm", "mm"),
-            "Resolution SD":    (self.res_RES_SD,       f"< 2 mm", "mm"),
-            "Diameter":         (self.res_GA,           f"142 - 148 mm", "mm"),
-            "Diameter SD":      (self.res_GA_SD,        f"< 2 mm", "mm"),
-            "Low Contrast":     (self.res_LCOD,         f"> 6 spokes", "spokes"),
-            "Image Uniformity": (self.res_IIU,          f"> 80%", "%"),
-            "Slice Thickness":  (self.res_STA,          f"4 - 6 mm", "mm"),
-            "Slice Position":   (self.res_SPA,          f"-4 to 4 mm", "mm"),
-            "Grid Angle":       (self.res_Grid_angle,   f"87 - 93 degrees", "degrees"),
-            "Grid Size":        (self.res_Grid_size,    f"28 - 44 mm2", "mm2"),
-            "Ghosting":         (self.res_Ghosting,     f"< 5%", "%")
+        results_mapping = { # {"Testname": result, "min/max deviation", "unit"}
+            "Resolution":       
+                    (self.res_RES,          f'{self.criteria["Resolution"]["min"]} - {self.criteria["Resolution"]["max"]} mm', "mm"),
+            "Resolution SD":   
+                    (self.res_RES_SD,       f'< {self.criteria["ResolutionSD"]["max"]} mm', "mm"),
+            "Diameter":        
+                    (self.res_GA,           f'{self.criteria["Diameter"]["min"]} - {self.criteria["Diameter"]["max"]} mm', "mm"),
+            "Diameter SD":     
+                    (self.res_GA_SD,        f'< {self.criteria["DiameterSD"]["max"]} mm', "mm"),
+            "Low Contrast":    
+                    (self.res_LCOD,         f'> {self.criteria["Low Contrast"]["min"]} spokes', "spokes"),
+            "Image Uniformity":
+                    (self.res_IIU,          f'> {self.criteria["Image Uniformity"]["min"]}%', "%"),
+            "Slice Thickness": 
+                    (self.res_STA,          f'{self.criteria["Slice Thickness"]["min"]} - {self.criteria["Slice Thickness"]["max"]} mm', "mm"),
+            "Slice Position":  
+                    (self.res_SPA,          f'{self.criteria["Slice Position"]["min"]} - {self.criteria["Slice Position"]["max"]} mm', "mm"),
+            "Grid Angle":      
+                    (self.res_Grid_angle,   f'{self.criteria["Grid Angle"]["min"]} - {self.criteria["Grid Angle"]["max"]} degrees', "degrees"),
+            "Grid Size":       
+                    (self.res_Grid_size,    f'{self.criteria["Grid Size"]["min"]} - {self.criteria["Grid Size"]["max"]} mm2', "mm2"),
+            "Ghosting":        
+                    (self.res_Ghosting,     f'< {self.criteria["Ghosting"]["max"]}%', "%")
         }
 
         for key, value in results_mapping.items():
