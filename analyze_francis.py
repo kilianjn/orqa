@@ -38,5 +38,5 @@ Analyzer.position(False, True)
 Analyzer.ghosting(False ,True)
 
 Analyzer.add2csv()
-Analyzer.create_report()
+# Analyzer.create_report()
 # Analyzer.create_longterm_report()

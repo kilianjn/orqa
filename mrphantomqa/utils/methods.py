@@ -130,6 +130,10 @@ class functions:
         return x,bins[0:-1]
 
     def createThresholdImage(imagedata, threshold, showplot=False):
+        """
+        Creates threshold image for a given threshold.
+        Output array has datatype binary.
+        """
         thld_image = np.zeros(imagedata.shape)
         mask = np.ma.getmask(imagedata)
         thld_image[np.where(imagedata >= threshold)] = 1
