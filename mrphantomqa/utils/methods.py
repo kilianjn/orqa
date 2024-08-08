@@ -133,7 +133,7 @@ class functions:
         thld_image = np.zeros(imagedata.shape)
         mask = np.ma.getmask(imagedata)
         thld_image[np.where(imagedata >= threshold)] = 1
-        thld_image = thld_image.astype(int)
+        thld_image = thld_image.astype(bool)
         
         if mask.any():
             thld_image = np.ma.masked_array(thld_image, mask)
@@ -350,7 +350,7 @@ class functions:
     def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
         """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
         as length between the first and last 1 along the line in the picture."""
-        assert len(np.unique(imagedata)) == 2 or len(np.unique(imagedata)) == 3,"Image values must be binary" #3 for the case of masked arrays
+        assert len(np.unique(imagedata)) == 2 or len(np.unique(imagedata.data)) == 2,"Image values must be binary" # 2nd option for the case of masked arrays
         spacing_y, spacing_x = spacing
         y_startpoint, x_startpoint = startpoint
 

@@ -30,22 +30,23 @@ class francisAnalyzer:
         self.res_Grid_angle = None  # Grid angle
         self.res_Ghosting   = None  # Percent Ghosting Ratio
 
-        self.results        = []
-        self.criteria       = {
-            "Resolution": {"min": 0.8, "max": 1.2},
-            "ResolutionSD": {"max": 2},
-            "Diameter": {"min": 142,"max": 148},
-            "Diameter SD": {"max": 2},
-            "Low Contrast": {"min": 6},
-            "Image Uniformity": {"min": 80},
-            "Slice Thickness": {"min": 4, "max": 6},
-            "Slice Position": {"min":-4,"max": 4},
-            "Grid Angle": {"min": 87,"max": 93},
-            "Grid Size": {"min":28, "max": 44},
-            "Ghosting": {"max": 5}
-        }
+        self.results        = None
 
-        self.longtermdata = {}
+        self.criteria       = {
+                              "Resolution":       {"min": 0.8, "max": 1.2},
+                              "ResolutionSD":     {"max": 2},
+                              "Diameter":         {"min": 142,"max": 148},
+                              "Diameter SD":      {"max": 2},
+                              "Low Contrast":     {"min": 6},
+                              "Image Uniformity": {"min": 80},
+                              "Slice Thickness":  {"min": 4, "max": 6},
+                              "Slice Position":   {"min":-4,"max": 4},
+                              "Grid Angle":       {"min": 87,"max": 93},
+                              "Grid Size":        {"min":28, "max": 44},
+                              "Ghosting":         {"max": 5}
+                              }
+
+        self.longtermdata   = {}
 
     def resolution(self, showplot=False, savefig=False):
         
@@ -215,7 +216,7 @@ class francisAnalyzer:
     def position(self, showplot=False, savefig=False):
         img = self.imagedata[6]
         rectimg = francisfunc.spa.cutoutRect(img)
-        length_diff, lengths = francisfunc.spa.getPositionDifference(rectimg)
+        length_diff, lengths = francisfunc.spa.getPositionDifference(~rectimg)
 
         if showplot or savefig:
             plt.imshow(rectimg)
@@ -307,43 +308,23 @@ class francisAnalyzer:
         self.res_Ghosting = np.round(100 * result, 2)
         return
 
-    def _organize_data(self):
-        header = ["Date of measurement",
-                  "Time of Measurement",
-                  "Resolution",
-                  "ResolutionSD",
-                  "Geometric Accuracy",
-                  "Geometric Accuracy SD",
-                  "Low Contrast",
-                  "Image Uniformity",
-                  "Slice Thickness",
-                  "Slice Position",
-                  "Grid Angle",
-                  "Grid Size",
-                  "Ghosting"
-                  ]
-        self.results.append(header)
-        
-        data = [f"{self.metadata[0x00080020].value}",
-                f"{self.metadata[0x00080031].value}",
-                f"{self.res_RES}",
-                f"{self.res_RES_SD}",
-                f"{self.res_GA}",
-                f"{self.res_GA_SD}",
-                f"{self.res_LCOD}",
-                f"{self.res_IIU}",
-                f"{self.res_STA}",
-                f"{self.res_SPA}",
-                f"{self.res_Grid_angle}",
-                f"{self.res_Grid_size}",
-                f"{self.res_Ghosting}"
-                ]
-
-        self.results.append(data)
-
     def add2csv(self):
-
-        self._organize_data()
+        self.results = {
+                        "Date of measurement":  f"{self.metadata[0x00080020].value}",
+                        "Time of measurement":  f"{self.metadata[0x00080031].value}",
+                        "Time of evaluation":   f"{datetime.now()}",
+                        "Resolution":           f"{self.res_RES}",
+                        "ResolutionSD":         f"{self.res_RES_SD}",
+                        "Geometric Accuracy":   f"{self.res_GA}",
+                        "Geometric Accuracy SD":f"{self.res_GA_SD}",
+                        "Low Contrast":         f"{self.res_LCOD}",
+                        "Image Uniformity":     f"{self.res_IIU}",
+                        "Slice Thickness":      f"{self.res_STA}",
+                        "Slice Position":       f"{self.res_SPA}",
+                        "Grid Angle":           f"{self.res_Grid_angle}",
+                        "Grid Size":            f"{self.res_Grid_size}",
+                        "Ghosting":             f"{self.res_Ghosting}"
+                        }
         
         # Create a CSV file
         csv_filename = f'{self.scannername}.csv'
@@ -352,9 +333,9 @@ class francisAnalyzer:
         with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
             csv_writer = csv.writer(csv_file)
             if write_header:
-                header = self.results[0]  # assuming self.results[0] is a list of headers
+                header = self.results.keys()  # assuming self.results[0] is a list of headers
                 csv_writer.writerow(header)
-            writedata = self.results[1]  # assuming self.results[1] is a list of data
+            writedata = [self.results[key] for key in self.results.keys()]  # assuming self.results[1] is a list of data
             csv_writer.writerow(writedata)
 
 
@@ -394,17 +375,17 @@ class francisAnalyzer:
         pdf.ln()
 
         results_mapping = {
-            "Resolution": (self.res_RES, "0.8 - 1.2 mm", "mm"),
-            "Resolution SD": (self.res_RES_SD, "< 2 mm", "mm"),
-            "Diameter": (self.res_GA, "142 - 148 mm", "mm"),
-            "Diameter SD": (self.res_GA_SD, "< 2 mm", "mm"),
-            "Low Contrast": (self.res_LCOD, "> 6 spokes", "spokes"),
-            "Image Uniformity": (self.res_IIU, "> 80%", "%"),
-            "Slice Thickness": (self.res_STA, "4 - 6 mm", "mm"),
-            "Slice Position": (self.res_SPA, "-4 to 4 mm", "mm"),
-            "Grid Angle": (self.res_Grid_angle, "87 - 93 degrees", "degrees"),
-            "Grid Size": (self.res_Grid_size, "28 - 44 mm2", "mm2"),
-            "Ghosting": (self.res_Ghosting, "< 5%", "%")
+            "Resolution":       (self.res_RES,          f"0.8 - 1.2 mm", "mm"),
+            "Resolution SD":    (self.res_RES_SD,       f"< 2 mm", "mm"),
+            "Diameter":         (self.res_GA,           f"142 - 148 mm", "mm"),
+            "Diameter SD":      (self.res_GA_SD,        f"< 2 mm", "mm"),
+            "Low Contrast":     (self.res_LCOD,         f"> 6 spokes", "spokes"),
+            "Image Uniformity": (self.res_IIU,          f"> 80%", "%"),
+            "Slice Thickness":  (self.res_STA,          f"4 - 6 mm", "mm"),
+            "Slice Position":   (self.res_SPA,          f"-4 to 4 mm", "mm"),
+            "Grid Angle":       (self.res_Grid_angle,   f"87 - 93 degrees", "degrees"),
+            "Grid Size":        (self.res_Grid_size,    f"28 - 44 mm2", "mm2"),
+            "Ghosting":         (self.res_Ghosting,     f"< 5%", "%")
         }
 
         for key, value in results_mapping.items():
@@ -419,15 +400,30 @@ class francisAnalyzer:
         # Add each result with its corresponding image
         pdf.set_font("Arial", size=12)
 
-        results_mapping_with_images = {
-            "Resolution": ("francis_res.png", [("Resolution", self.res_RES, "mm"), ("Resolution SD", self.res_RES_SD, "mm")]),
-            "Geometric Accuracy": ("francis_size.png", [("Diameter", self.res_GA, "mm"), ("Diameter SD", self.res_GA_SD, "mm")]),
-            "Low Contrast": ("francis_contrast.png", [("Low Contrast", self.res_LCOD, "spokes")]),
-            "Image Uniformity": ("francis_uniformity.png", [("Image Uniformity", self.res_IIU, "%")]),
-            "Slice Thickness": ("francis_thickness.png", [("Slice Thickness", self.res_STA, "mm")]),
-            "Slice Position": ("francis_position.png", [("Slice Position", self.res_SPA, "mm")]),
-            "Grid": ("francis_grid.png", [("Grid Size", self.res_Grid_size, "mm2"), ("Grid Angle", self.res_Grid_angle, "degrees")]),
-            "Ghosting": ("francis_ghosting.png", [("Ghosting", self.res_Ghosting, "%")])
+        results_mapping_with_images = { # {"Testname": imagefilename, [metricname, resultattribute, metric, (Deviation metrics)]}
+            "Resolution":           
+                    ("francis_res.png",         [("Resolution", self.res_RES, "mm"), ("Resolution SD", self.res_RES_SD, "mm")]),
+
+            "Geometric Accuracy":
+                    ("francis_size.png",        [("Diameter", self.res_GA, "mm"), ("Diameter SD", self.res_GA_SD, "mm")]),
+
+            "Low Contrast":         
+                    ("francis_contrast.png",    [("Low Contrast", self.res_LCOD, "spokes")]),
+
+            "Image Uniformity":     
+                    ("francis_uniformity.png",  [("Image Uniformity", self.res_IIU, "%")]),
+
+            "Slice Thickness":      
+                    ("francis_thickness.png",   [("Slice Thickness", self.res_STA, "mm")]),
+
+            "Slice Position":       
+                    ("francis_position.png",    [("Slice Position", self.res_SPA, "mm")]),
+
+            "Grid":                 
+                    ("francis_grid.png",        [("Grid Size", self.res_Grid_size, "mm2"), ("Grid Angle", self.res_Grid_angle, "degrees")]),
+
+            "Ghosting":             
+                    ("francis_ghosting.png",    [("Ghosting", self.res_Ghosting, "%")])
         }
 
         for key, value in results_mapping_with_images.items():
@@ -465,7 +461,8 @@ class francisAnalyzer:
     def create_longterm_report(self):
         self._readcsv()
 
-        tests = {   "Resolution":           [0.3,2  ],
+        tests = {   
+                    "Resolution":           [0.3,2  ],
                     "Geometric Accuracy":   [140,150],
                     "Low Contrast":         [0  ,9  ],
                     "Image Uniformity":     [0  ,100],
@@ -473,12 +470,12 @@ class francisAnalyzer:
                     "Slice Position":       [-5 ,5  ],
                     "Grid Size":            [28 ,44 ],
                     "Ghosting":             [0  ,100]
-        }
+                }
 
-        
         for testname in tests.keys():
             xdata_raw = self.longtermdata["Date of measurement"]
             dates = [datetime.strptime(date, '%Y%m%d') for date in xdata_raw]
+
             ydata = [float(i) for i in self.longtermdata[testname]]
 
             # Plot the data

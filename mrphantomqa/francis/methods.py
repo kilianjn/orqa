@@ -53,7 +53,7 @@ class functions:
         def measureDistance(imagedata, startpoint, angle_in_deg, spacing=[1,1], showplot=False):
             """Finds length of straight line at an angle. Image has to be thresholded and Length is measured
             as length between the first and last 1 along the line in the picture."""
-            assert len(np.unique(imagedata)) == 2 or len(np.unique(imagedata)) == 3,"Image values must be binary" #3 for the case of masked arrays
+            assert len(np.unique(imagedata)) == 2 or len(np.unique(imagedata.data)) == 2,"Image values must be binary" #2nd for the case of masked arrays
             spacing_y, spacing_x = spacing
             y_startpoint, x_startpoint = startpoint
 
@@ -392,8 +392,6 @@ class functions:
 
             diameter = np.mean([utilFunc.measureDistance(thld_img, centerpoint, i) for i in [45, 135]])
             coord_divider = (centerpoint[0] - int(0.4*diameter),centerpoint[1])
-
-            thld_img_ring = ~utilFunc.cutoutStructureMask(thld_img, coord_divider)
 
             center_offset_y = int(diameter * 0.03)
             center_offset_x = int(diameter * 0.07)
