@@ -11,42 +11,46 @@ from fpdf import FPDF
 
 class francisAnalyzer:
     def __init__(self, data) -> None:
-        self.imagedata      = data.imagedata[0]
-        self.metadata       = data.metadata if hasattr(data, 'metadata') else None
+        self.imagedata          = data.imagedata[0] if hasattr(data, 'imagedata') else None
+        self.metadata           = data.metadata if hasattr(data, 'metadata') else None
 
-        self.scannername    = self.metadata[0x00080080].value
-        self.creationdate   = self.metadata[0x00080012].value
-        self.spacing        = self.metadata[0x52009230][0][0x00289110][0][0x00280030].value
+        self.scannername        = self.metadata[0x00080080].value
+        self.creationdate       = self.metadata[0x00080012].value
+        
+        self.spacing            = [1,1]
+        # Get correct pixel spacing
+        if self.metadata.get(0x52009230) is not None: # Case Enhanced save
+            self.spacing        = self.metadata[0x52009230][0][0x00289110][0][0x00280030].value
+        if self.metadata.get(0x00280030) is not None: # Case INteroperability
+            self.spacing        = [float(i) for i in self.metadata[0x00280030].value]
 
-        self.res_RES        = None  # Resolution
-        self.res_RES_SD     = None  # Resolution SD
-        self.res_GA         = None  # Geometric lenghts
-        self.res_GA_SD      = None  # Geometric lengths SD
-        self.res_LCOD       = None  # Low contrast
-        self.res_IIU        = None  # Image uniformity
-        self.res_STA        = None  # Slice thickness
-        self.res_SPA        = None  # Slice position
-        self.res_Grid_size  = None  # Grid size
-        self.res_Grid_angle = None  # Grid angle
-        self.res_Ghosting   = None  # Percent Ghosting Ratio
+        self.res_RES            = None  # Resolution
+        self.res_RES_SD         = None  # Resolution SD
+        self.res_GA             = None  # Geometric lenghts
+        self.res_GA_SD          = None  # Geometric lengths SD
+        self.res_LCOD           = None  # Low contrast
+        self.res_IIU            = None  # Image uniformity
+        self.res_STA            = None  # Slice thickness
+        self.res_SPA            = None  # Slice position
+        self.res_Grid_size      = None  # Grid size
+        self.res_Grid_angle     = None  # Grid angle
+        self.res_Ghosting       = None  # Percent Ghosting Ratio
 
-        self.results        = None
 
-        self.criteria       = {
-                              "Resolution":       {"min": 0.8, "max": 1.2},
-                              "ResolutionSD":     {"max": 2},
-                              "Diameter":         {"min": 142,"max": 148},
-                              "DiameterSD":      {"max": 2},
-                              "Low Contrast":     {"min": 6},
-                              "Image Uniformity": {"min": 80},
-                              "Slice Thickness":  {"min": 4, "max": 6},
-                              "Slice Position":   {"min":-4,"max": 4},
-                              "Grid Angle":       {"min": 87,"max": 93},
-                              "Grid Size":        {"min":28, "max": 44},
-                              "Ghosting":         {"max": 5}
-                              }
+        self._data_organized    = None
+        self.longtermdata       = {}
 
-        self.longtermdata   = {}
+        # Make folders
+        self.dirs           = { # KEEP OS.SEP!!!
+            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/tempimages" + f"{os.sep}",
+            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/testcsv" + f"{os.sep}",
+            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}",
+            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}"
+        }
+
+        for filetype, dir_to_save_to in self.dirs.items():
+            if not os.path.exists(dir_to_save_to):
+                os.makedirs(dir_to_save_to, exist_ok=True)
 
     def resolution(self, showplot=False, savefig=False):
         
@@ -97,7 +101,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             elif savefig:
-                plt.savefig("francis_res.png")
+                plt.savefig(self.dirs["png"]+"francis_res.png")
                 plt.close()
         
         self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2, 2)
@@ -155,7 +159,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if savefig:
-                plt.savefig("francis_contrast.png")
+                plt.savefig(self.dirs["png"]+"francis_contrast.png")
                 plt.close()
         
         self.res_LCOD = countedSpokes
@@ -187,7 +191,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if savefig:
-                plt.savefig("francis_uniformity.png")
+                plt.savefig(self.dirs["png"]+"francis_uniformity.png")
                 plt.close()
 
         self.res_IIU = np.round(100 * (1-(maxValue-minValue)/(maxValue+minValue)),2)
@@ -209,7 +213,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if savefig:
-                plt.savefig("francis_thickness.png")
+                plt.savefig(self.dirs["png"]+"francis_thickness.png")
                 plt.close()
         pass
 
@@ -226,7 +230,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             elif savefig:
-                plt.savefig("francis_position")
+                plt.savefig(self.dirs["png"]+"francis_position.png")
                 plt.close()
 
         self.res_SPA = np.round(length_diff * self.spacing[0],2)
@@ -244,7 +248,7 @@ class francisAnalyzer:
 
         squaresize = (self.spacing[0] * dist_lines[0]) * (self.spacing[1] * dist_lines[1])
 
-        francisfunc.grid.printImage(img_grid_pre, lines, showplot, savefig)
+        francisfunc.grid.printImage(img_grid_pre, lines, showplot, savefig, self.dirs["png"])
 
         self.res_Grid_size = np.round(squaresize,2)
         self.res_Grid_angle = np.round(np.rad2deg(angle_cross),2)
@@ -268,7 +272,7 @@ class francisAnalyzer:
         measureResults1 = francisfunc.ga.measureDistance(thld_img, centerpoint,  45, self.spacing)
         measureResults2 = francisfunc.ga.measureDistance(thld_img, centerpoint, -45, self.spacing)
 
-        if showplot or print:
+        if showplot or savefig:
             plt.imshow(img, cmap='gray')
             for len, coord in [measureResults1, measureResults2]:
                 plt.scatter(coord[:, 1], coord[:, 0], c='red', marker='x')
@@ -278,7 +282,7 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if savefig:
-                plt.savefig("francis_size.png")
+                plt.savefig(self.dirs["png"]+"francis_size.png")
                 plt.close()
         
         self.res_GA = np.round(np.mean([measureResults1[0], measureResults2[0]]),2)
@@ -302,45 +306,110 @@ class francisAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("francis_ghosting.png")
+                plt.savefig(self.dirs["png"]+"francis_ghosting.png")
                 plt.close()
 
         self.res_Ghosting = np.round(100 * result, 2)
         return
 
-    def add2csv(self):
-        self.results = {
-                        "Date of measurement":  f"{self.metadata[0x00080020].value}",
-                        "Time of measurement":  f"{self.metadata[0x00080031].value}",
-                        "Time of evaluation":   f"{datetime.now()}",
-                        "Resolution":           f"{self.res_RES}",
-                        "ResolutionSD":         f"{self.res_RES_SD}",
-                        "Geometric Accuracy":   f"{self.res_GA}",
-                        "Geometric Accuracy SD":f"{self.res_GA_SD}",
-                        "Low Contrast":         f"{self.res_LCOD}",
-                        "Image Uniformity":     f"{self.res_IIU}",
-                        "Slice Thickness":      f"{self.res_STA}",
-                        "Slice Position":       f"{self.res_SPA}",
-                        "Grid Angle":           f"{self.res_Grid_angle}",
-                        "Grid Size":            f"{self.res_Grid_size}",
-                        "Ghosting":             f"{self.res_Ghosting}"
-                        }
+    @property
+    def data_organized(self):
+        # Organize data. All tests have to have ran otherwise you get an error.
+        if self._data_organized is None:
+            self._data_organized = {
+                "Resolution": {
+                    "result": self.res_RES,
+                    "deviation": self.res_RES_SD,
+                    "criteria": {"min": 0.5, "max": 1},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"francis_res.png",
+                    "display_range": [0.3,2  ],
+                },
+                "Diameter": {
+                    "result": self.res_GA,
+                    "deviation": self.res_GA_SD,
+                    "criteria": {"min": 142,"max": 148},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"francis_size.png",
+                    "display_range": [140,150],
+                },
+                "Low Contrast": {
+                    "result": self.res_LCOD,
+                    "criteria": {"min": 6, "max": 8},
+                    "unit": "spokes",
+                    "image": self.dirs["png"]+"francis_contrast.png",
+                    "display_range": [0  ,9  ],
+                },
+                "Image Uniformity": {
+                    "result": self.res_IIU,
+                    "criteria": {"min": 80, "max": 100},
+                    "unit": "%",
+                    "image": self.dirs["png"]+"francis_uniformity.png",
+                    "display_range": [0  ,100],
+                },
+                "Slice Thickness": {
+                    "result": self.res_STA,
+                    "criteria": {"min": 4, "max": 6},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"francis_thickness.png",
+                    "display_range": [0  ,10 ],
+                },
+                "Slice Position": {
+                    "result": self.res_SPA,
+                    "criteria": {"min":-4,"max": 4},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"francis_position.png",
+                    "display_range": [-5 ,5  ],
+                },
+                "Grid Angle": {
+                    "result": self.res_Grid_angle,
+                    "criteria": {"min": 87,"max": 93},
+                    "unit": "degrees",
+                    "image": self.dirs["png"]+"francis_grid.png",
+                    "display_range": [0,95]
+                },
+                "Grid Size": {
+                    "result": self.res_Grid_size,
+                    "criteria": {"min":28, "max": 44},
+                    "unit": "mm2",
+                    "image": self.dirs["png"]+"francis_grid.png",
+                    "display_range": [28 ,44 ],
+                },
+                "Ghosting": {
+                    "result": self.res_Ghosting,
+                    "criteria": {"min": 0, "max": 5},
+                    "unit": "%",
+                    "image": self.dirs["png"]+"francis_ghosting.png",
+                    "display_range": [0  ,100],
+                }
+            } 
         
-        # Create a CSV file
-        csv_filename = f'{self.scannername}.csv'
+        return self._data_organized
+
+    def add2csv(self):
+        # csv header and data
+        savedata = {
+            "Date of measurement":  f"{self.metadata[0x00080020].value}",
+            "Time of measurement":  f"{self.metadata[0x00080031].value}",
+            "Time of evaluation":   f"{datetime.now()}"
+        }
+        for testname, prop in self.data_organized.items():
+            savedata[testname] = prop["result"]
+
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_francis.csv'
         write_header = not os.path.isfile(csv_filename)
         
+        # Write CSV
         with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
             csv_writer = csv.writer(csv_file)
             if write_header:
-                header = self.results.keys()  # assuming self.results[0] is a list of headers
+                header = savedata.keys()
                 csv_writer.writerow(header)
-            writedata = [self.results[key] for key in self.results.keys()]  # assuming self.results[1] is a list of data
+            writedata = [savedata[key] for key in savedata.keys()]
             csv_writer.writerow(writedata)
 
-
     def _check_criteria(self, test_name, value):
-        criteria = self.criteria.get(test_name)
+        criteria = self.data_organized.get(test_name).get("criteria")
         if not criteria:
             return False
 
@@ -352,16 +421,19 @@ class francisAnalyzer:
         return True
 
     def create_report(self):
-        # Initialize the PDF
+        combined_results_mapping = self.data_organized
+
+        # Creation of PDF
+        ## Initialize the PDF
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        # Add a title page
+        ## Add a title page
         pdf.add_page()
         pdf.set_font("Arial", size=24)
         pdf.cell(200, 10, "Francis Analyzer Report", ln=True, align='C')
 
-        # Add summary table
+        ## Add summary table
         pdf.set_font("Arial", size=12)
         pdf.ln(20)  # Add some space
         pdf.set_font("Arial", size=16)
@@ -374,86 +446,52 @@ class francisAnalyzer:
         pdf.cell(40, 10, "Pass/Fail", 1)
         pdf.ln()
 
-        results_mapping = { # {"Testname": result, "min/max deviation", "unit"}
-            "Resolution":       
-                    (self.res_RES,          f'{self.criteria["Resolution"]["min"]} - {self.criteria["Resolution"]["max"]} mm', "mm"),
-            "Resolution SD":   
-                    (self.res_RES_SD,       f'< {self.criteria["ResolutionSD"]["max"]} mm', "mm"),
-            "Diameter":        
-                    (self.res_GA,           f'{self.criteria["Diameter"]["min"]} - {self.criteria["Diameter"]["max"]} mm', "mm"),
-            "Diameter SD":     
-                    (self.res_GA_SD,        f'< {self.criteria["DiameterSD"]["max"]} mm', "mm"),
-            "Low Contrast":    
-                    (self.res_LCOD,         f'> {self.criteria["Low Contrast"]["min"]} spokes', "spokes"),
-            "Image Uniformity":
-                    (self.res_IIU,          f'> {self.criteria["Image Uniformity"]["min"]}%', "%"),
-            "Slice Thickness": 
-                    (self.res_STA,          f'{self.criteria["Slice Thickness"]["min"]} - {self.criteria["Slice Thickness"]["max"]} mm', "mm"),
-            "Slice Position":  
-                    (self.res_SPA,          f'{self.criteria["Slice Position"]["min"]} - {self.criteria["Slice Position"]["max"]} mm', "mm"),
-            "Grid Angle":      
-                    (self.res_Grid_angle,   f'{self.criteria["Grid Angle"]["min"]} - {self.criteria["Grid Angle"]["max"]} degrees', "degrees"),
-            "Grid Size":       
-                    (self.res_Grid_size,    f'{self.criteria["Grid Size"]["min"]} - {self.criteria["Grid Size"]["max"]} mm2', "mm2"),
-            "Ghosting":        
-                    (self.res_Ghosting,     f'< {self.criteria["Ghosting"]["max"]}%', "%")
-        }
+        ## Fill Table
+        for key, value in combined_results_mapping.items():
+            result = value["result"]
+            unit = value["unit"]
+            deviation = value.get("deviation")
 
-        for key, value in results_mapping.items():
-            result, criteria, unit = value
+            criteria = f'{value.get("criteria").get("min")} <= {value.get("criteria").get("max")} {unit}'
+
+            ### Format the result with deviation if it exists
+            result_str = f"{result}{unit}"
+            if deviation is not None:
+                result_str += f"+-{deviation}{unit}"
+
             pass_fail = "Pass" if self._check_criteria(key, result) else "Fail"
+            
             pdf.cell(40, 10, key, 1)
-            pdf.cell(40, 10, f"{result} {unit}", 1)
+            pdf.cell(40, 10, result_str, 1)
             pdf.cell(40, 10, criteria, 1)
             pdf.cell(40, 10, pass_fail, 1)
             pdf.ln()
-
-        # Add each result with its corresponding image
+        
+        ## Add pages with images
         pdf.set_font("Arial", size=12)
 
-        results_mapping_with_images = { # {"Testname": imagefilename, [metricname, resultattribute, metric, (Deviation metrics)]}
-            "Resolution":           
-                    ("francis_res.png",         [("Resolution", self.res_RES, "mm"), ("Resolution SD", self.res_RES_SD, "mm")]),
+        for key, value in combined_results_mapping.items():
+            image_filename = value["image"]
+            metric_name = key
+            metric_value = value["result"]
+            metric_unit = value["unit"]
 
-            "Geometric Accuracy":
-                    ("francis_size.png",        [("Diameter", self.res_GA, "mm"), ("Diameter SD", self.res_GA_SD, "mm")]),
+            metric_deviation = f'+-{value["deviation"]}' if value.get("deviation") else ""
 
-            "Low Contrast":         
-                    ("francis_contrast.png",    [("Low Contrast", self.res_LCOD, "spokes")]),
-
-            "Image Uniformity":     
-                    ("francis_uniformity.png",  [("Image Uniformity", self.res_IIU, "%")]),
-
-            "Slice Thickness":      
-                    ("francis_thickness.png",   [("Slice Thickness", self.res_STA, "mm")]),
-
-            "Slice Position":       
-                    ("francis_position.png",    [("Slice Position", self.res_SPA, "mm")]),
-
-            "Grid":                 
-                    ("francis_grid.png",        [("Grid Size", self.res_Grid_size, "mm2"), ("Grid Angle", self.res_Grid_angle, "degrees")]),
-
-            "Ghosting":             
-                    ("francis_ghosting.png",    [("Ghosting", self.res_Ghosting, "%")])
-        }
-
-        for key, value in results_mapping_with_images.items():
-            image, metrics = value
             pdf.add_page()
             pdf.set_font("Arial", size=16)
             pdf.cell(200, 10, key, ln=True, align='L')
-            pdf.image(image, x=80, y=20, w=120)
+            pdf.image(image_filename, x=80, y=20, w=120)
             # pdf.set_xy(20, 30)
             pdf.ln(20)
             pdf.set_font("Arial", size=12)
-            for metric_name, metric_value, unit in metrics:
-                pdf.cell(200, 10, f"{metric_name}: {metric_value} {unit}", ln=True)
+            pdf.cell(200, 10, f"{metric_name}: {metric_value}{metric_deviation} {metric_unit}", ln=True)
 
         # Save the PDF
-        pdf.output(f"{self.scannername}_{self.creationdate}_QAreport.pdf")
+        pdf.output(self.dirs["srp"] + f"{self.scannername}_{self.creationdate}_QAreport.pdf")
 
     def _readcsv(self):
-        csv_filename = f'{self.scannername}.csv'
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_francis.csv'
         with open(csv_filename, 'r') as file:
             reader = csv.DictReader(file)
             # Collect all rows in a list
@@ -468,22 +506,10 @@ class francisAnalyzer:
                             self.longtermdata[column] = []
                         self.longtermdata[column].append(row[column])
 
-
     def create_longterm_report(self):
         self._readcsv()
 
-        tests = {   
-                    "Resolution":           [0.3,2  ],
-                    "Geometric Accuracy":   [140,150],
-                    "Low Contrast":         [0  ,9  ],
-                    "Image Uniformity":     [0  ,100],
-                    "Slice Thickness":      [0  ,10 ],
-                    "Slice Position":       [-5 ,5  ],
-                    "Grid Size":            [28 ,44 ],
-                    "Ghosting":             [0  ,100]
-                }
-
-        for testname in tests.keys():
+        for testname, value in self.data_organized.items():
             xdata_raw = self.longtermdata["Date of measurement"]
             dates = [datetime.strptime(date, '%Y%m%d') for date in xdata_raw]
 
@@ -493,7 +519,7 @@ class francisAnalyzer:
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
             plt.gcf().autofmt_xdate()  # Auto format date labels
             plt.plot(dates, ydata, marker='o')
-            plt.ylim(tests[testname])
+            plt.ylim(value["display_range"])
             # plt.ylim([0,10])
 
             # Adding titles and labels
@@ -503,7 +529,7 @@ class francisAnalyzer:
             # Show the plot
             # plt.show()
             # Save figure
-            plt.savefig(f"Longterm_{testname}.png")
+            plt.savefig(self.dirs["png"]+f"Longterm_{testname}.png")
             plt.close()
 
         
@@ -511,25 +537,20 @@ class francisAnalyzer:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        # # Add a title page
-        # pdf.add_page()
-        # pdf.set_font("Arial", size=24)
-        # pdf.cell(200, 10, "Francis longterm Report", ln=True, align='C')
-
         pdf.set_font("Arial", size=12)
         x_offset = 10
         y_offset = 30
         width = 90
         height = 70
 
-        for i, testname in enumerate(tests.keys()):
+        for i, testname in enumerate(self.data_organized.keys()):
             if i % 3 == 0:
                 pdf.add_page()
                 y_offset = 30
-            pdf.image(f"Longterm_{testname}.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}.png", x=x_offset, y=y_offset, w=width, h=height)
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
         
-        pdf.output(f'{self.scannername}_longterm_report.pdf')
-        pass
+        pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report.pdf')
+

@@ -10,19 +10,14 @@ from mrphantomqa.francis_analyzer import francisAnalyzer
 # import cv2 as cv
 # import matplotlib.pyplot as plt
 
-# filepath = "/Volumes/KINGSTON/Francis/Kamera3/Goldstandard/Phantom^Francis_2024.06.11-16_36_52-DST-1.3.12.2.1107.5.99.3_20000101"
-# filepath = "/Volumes/SANDISK/Francis/FrancisFantome_2024.06.13-10_10_19-DST-1.3.12.2.1107.5.99.3_19000101/Neuro_Vuxen_20240613_101047.700000"
-# filepath = "/Volumes/KINGSTON/Francis/Kamera2/06172024/Phantom^Francis_NaCl_2024.06.14-15_59_53-DST-1.3.12.2.1107.5.99.3_20000101/Neuro_Vuxen_20240614_160012.700000"
-filepath = "/Volumes/KINGSTON/Francis/Kamera2/07152024/Phantom^Francis_2024.07.15-12_36_55-DST-1.3.12.2.1107.5.99.3_20000101/Neuro_Vuxen_20240715_123712.000000"
-filepath = "/Volumes/KINGSTON/Francis/Kamera13/07122024/Phantom^Francis_2024.07.12-12_07_52-DST-1.3.12.2.1107.5.99.3_20000101/NEURO_Hjärna_20240712_120814.200000"
 filepath = "/Volumes/KINGSTON/Francis/Kamera1/07122024"
 filepath = "/Volumes/KINGSTON/Francis/Kamera2/06242024"
-# filepath = askForPath()
+filepath = askForPath()
 dfs = mrphantomqa.dicomFolderScanner(filepath)
-# dfs.menu_gui()
+dfs.menu_gui()
 # dfs.list_scans()
 # dfs.choose_scan("124630.342000 FP_T1")
-dfs.choose_scan("123939.620000 t1_tse_tf1soSE_9sl_medFilter")
+# dfs.choose_scan("123939.620000 t1_tse_tf1soSE_9sl_medFilter")
 dfs.sequence_properties()
 dfs.get_data()
 # dfs.view_raw_image()
@@ -37,6 +32,6 @@ Analyzer.thickness(False, True)
 Analyzer.position(False, True)
 Analyzer.ghosting(False ,True)
 
-# Analyzer.add2csv()
+Analyzer.add2csv()
 Analyzer.create_report()
-# Analyzer.create_longterm_report()
+Analyzer.create_longterm_report()

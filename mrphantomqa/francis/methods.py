@@ -269,7 +269,7 @@ class functions:
             # Line processing
             if lines is None:
                 print("No lines found at all.")
-                return [0,0], False, None
+                return [0,0], False, []
 
             ## Extract lines in certain angle region      
             lines_hori_pre = [line for line in lines if line[0][1] < 0.02 or line[0][1] > np.pi - 0.02]
@@ -308,7 +308,7 @@ class functions:
 
             return squaresize_in_pixels, angle_grid, lines_main
         
-        def printImage(imagedata, linedata, showplot, savefig):
+        def printImage(imagedata, linedata, showplot, savefig, path):
 
             plt.imshow(imagedata, cmap='gray')
 
@@ -333,7 +333,7 @@ class functions:
                 if showplot:
                     plt.show()
                 if savefig:
-                    plt.savefig("francis_grid.png")
+                    plt.savefig(path + "francis_grid.png")
                     plt.close()
             
             return None
