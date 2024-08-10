@@ -1,7 +1,11 @@
-from tqdm import tqdm
+import csv
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
-from scipy.optimize import curve_fit
+import os
+
+from datetime import datetime
+from fpdf import FPDF
 
 from .glover.methods import functions
 from .glover import viewer
@@ -34,26 +38,46 @@ class gloverAnalyzer:
     """
 
     def __init__(self, timeseries_data):
-        assert len(timeseries_data.shape) == 3,"Data has to have only 3 dimensions (time,space,space)"
-        self.timeseries = timeseries_data
+        assert len(timeseries_data.imagedata[:,9,:,:].shape) == 3,"Data has to have only 3 dimensions (time,space,space)"
+        self.timeseries = timeseries_data.imagedata[:,9,:,:]
+        self.metadata = timeseries_data.metadata
 
-        self.viewer = viewer
+        self.scannername        = self.metadata[0x00080080].value
+        self.creationdate       = self.metadata[0x00080012].value
+
+        # self.viewer = viewer
         # self.functions = functions
         # self.debug = self.MiscFunctions()
 
-        self._signalImage = None
-        self._tempflucnoiseImage = None
-        self._sfnrImage = None
-        self._spatialnoiseImage = None
-        self._snrImage = None
+        self._signalImage           = None
+        self._tempflucnoiseImage    = None
+        self._sfnrImage             = None
+        self._spatialnoiseImage     = None
+        self._snrImage              = None
 
-        self._snrSV = None
-        self._sfnrSV = None
+        self._snrSV                 = None
+        self._sfnrSV                = None
 
-        self._percentFluc = None
-        self._drift = None
-        self._residualsSVs = None
-        self._residualsSVsFT = None
+        self._percentFluc           = None
+        self._drift                 = None
+        self._residualsSVs          = None
+        self._residualsSVsFT        = None
+        self.rdc                    = None
+
+        self._data_organized        = None
+        self.longtermdata       = {}
+
+        self.dirs               = {     # KEEP OS.SEP!!!
+            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/glover" + f"{os.sep}",
+            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/glover" + f"{os.sep}",
+            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/glover" + f"{os.sep}",
+            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/glover" + f"{os.sep}"
+        }
+
+        for filetype, dir_to_save_to in self.dirs.items():
+            if not os.path.exists(dir_to_save_to):
+                os.makedirs(dir_to_save_to, exist_ok=True)
+
 
     @property
     def signalImage(self):
@@ -137,7 +161,7 @@ class gloverAnalyzer:
         return self._drift
 
 
-    def weisskoffAnalysis(self, maxROI=21, showPlot=True):
+    def weisskoffAnalysis(self, maxROI=21, showPlot=False):
         coeffOfVar = np.empty((maxROI,2))
         theory_best = np.empty((maxROI,2))
         meanImage = self.signalImage
@@ -171,7 +195,8 @@ class gloverAnalyzer:
             plt.grid(True)
             plt.show()
 
-        return coeffOfVar
+        self.rdc = rdc
+        return rdc
 
 
     def weisskoffAnalysisDebug(self,meanImage, timeSeries, maxROI=21, showPlot=True):
@@ -209,3 +234,129 @@ class gloverAnalyzer:
             plt.show()
 
         return coeffOfVar
+
+
+    @property
+    def data_organized(self):
+        # Organize data. All tests have to have ran otherwise you get an error.
+        if self._data_organized is None:
+            self._data_organized = {
+                "SNR SV": {
+                    "result": self.snrSV,
+                    "display_range": [0,2],
+                },
+                "SFNR SV": {
+                    "result": self.sfnrSV,
+                    "display_range": [0,150],
+                },
+                "PF": {
+                    "result": self.percentFluc,
+                    "display_range": [0,150],
+                },
+                "Drift": {
+                    "result": self.drift,
+                    "display_range": [0,150],
+                }
+            }
+        
+        return self._data_organized
+    
+    def add2csv(self):
+        # csv header and data
+        savedata = {
+            "Date of measurement":  f"{self.metadata[0x00080020].value}",
+            "Time of measurement":  f"{self.metadata[0x00080031].value}",
+            "Time of evaluation":   f"{datetime.now()}"
+        }
+        for testname, prop in self.data_organized.items():
+            savedata[testname] = prop["result"]
+
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_glover.csv'
+        write_header = not os.path.isfile(csv_filename)
+        
+        # Write CSV
+        with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            if write_header:
+                header = savedata.keys()
+                csv_writer.writerow(header)
+            writedata = [savedata[key] for key in savedata.keys()]
+            csv_writer.writerow(writedata)
+
+    def _readcsv(self):
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_glover.csv'
+        with open(csv_filename, 'r') as file:
+            reader = csv.DictReader(file)
+            # Collect all rows in a list
+            rows = [row for row in reader]
+            # Sort rows by the 'Date of measurement' column
+            rows = sorted(rows, key=lambda row: row['Date of measurement'])
+
+            for row in rows:
+                for column in reader.fieldnames:
+                    if column in row:
+                        if column not in self.longtermdata:
+                            self.longtermdata[column] = []
+                        self.longtermdata[column].append(row[column])
+
+    def create_longterm_report(self):
+        self._readcsv()
+
+        for testname, value in self.data_organized.items():
+            xdata_raw = self.longtermdata["Date of measurement"]
+            dates = [datetime.strptime(date, '%Y%m%d') for date in xdata_raw]
+
+            ydata = [float(i) for i in self.longtermdata[testname]]
+
+            # Plot the data
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+            plt.gcf().autofmt_xdate()  # Auto format date labels
+            plt.plot(dates, ydata, marker='o')
+            plt.ylim(value["display_range"])
+            # plt.ylim([0,10])
+
+            # Adding titles and labels
+            plt.title(f'Longitudinal plot for {testname}')
+            plt.ylabel('Testresult')
+
+            # Show the plot
+            # plt.show()
+            # Save figure
+            plt.savefig(self.dirs["png"]+f"Longterm_{testname}_glover.png")
+            plt.close()
+
+        
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        pdf.set_font("Arial", size=12)
+        x_offset = 10
+        y_offset = 30
+        width = 90
+        height = 70
+
+        for i, testname in enumerate(self.data_organized.keys()):
+            if i % 3 == 0:
+                pdf.add_page()
+                y_offset = 30
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}_glover.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.set_xy(x_offset, y_offset + height + 5)
+            # pdf.cell(200, 100, testname, ln=True)
+            y_offset += height + 20
+        
+        pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report.pdf')
+
+    def runall(self):
+        self.resolution(False, True)
+        self.low_contrast(False, True)
+        self.uniformity(False, True)
+        self.size(False, True)
+        self.grid(False, True)
+        self.thickness(False, True)
+        self.position(False, True)
+        self.ghosting(False, True)
+
+        self.add2csv()
+        self.create_report()
+        self.create_longterm_report()

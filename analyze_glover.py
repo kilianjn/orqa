@@ -13,25 +13,25 @@ scanner.get_data()
 # scanner.view_raw_image()
 
 # scanner.view_raw_image()
-gm = mrphantomqa.gloverAnalyzer(scanner.imagedata[:,9,:,:])
+gm = mrphantomqa.gloverAnalyzer(scanner)
 
-gm.viewer.view_image(gm.signalImage,"SignalImage")
+gm.add2csv()
+gm.create_longterm_report()
+# gm.viewer.view_image(gm.signalImage,"SignalImage")
 
+# gm.viewer.view_image(gm.tempFlucImage,"temporalFlucNoise")
+# gm.viewer.view_image(gm.sfnrImage,"SFNR Image")
+# gm.viewer.view_image(gm.staticSpatialNoiseImage,"SNR Image")
 
+# print(f"SNR {gm.snrSV}")
+# print(f"SFNR {gm.sfnrSV}")
 
-gm.viewer.view_image(gm.tempFlucImage,"temporalFlucNoise")
-gm.viewer.view_image(gm.sfnrImage,"SFNR Image")
-gm.viewer.view_image(gm.staticSpatialNoiseImage,"SNR Image")
+# print(f"Percent Fluctuation {gm.percentFluc}")
+# print(f"Drift {gm.drift}")
 
-print(f"SNR {gm.snrSV}")
-print(f"SFNR {gm.sfnrSV}")
+# gm.viewer.plot_pixel_over_time(gm.residualsSVs,title="Residual SVs over time")
+# gm.viewer.plot_pixel_over_time(gm.residualsSVsFT, title="FT'd SVs over Frequency")
 
-print(f"Percent Fluctuation {gm.percentFluc}")
-print(f"Drift {gm.drift}")
-
-gm.viewer.plot_pixel_over_time(gm.residualsSVs,title="Residual SVs over time")
-gm.viewer.plot_pixel_over_time(gm.residualsSVsFT, title="FT'd SVs over Frequency")
-
-gm.weisskoffAnalysis(21,True)
+# gm.weisskoffAnalysis(21,True)
 
 

@@ -36,14 +36,14 @@ class francisAnalyzer:
         self.res_Grid_angle     = None  # Grid angle
         self.res_Ghosting       = None  # Percent Ghosting Ratio
 
-
         self._data_organized    = None
+
         self.longtermdata       = {}
 
         # Make folders
-        self.dirs           = { # KEEP OS.SEP!!!
+        self.dirs               = {     # KEEP OS.SEP!!!
             "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/tempimages" + f"{os.sep}",
-            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/testcsv" + f"{os.sep}",
+            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/" + f"{os.sep}",
             "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}",
             "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}"
         }
@@ -312,6 +312,7 @@ class francisAnalyzer:
         self.res_Ghosting = np.round(100 * result, 2)
         return
 
+
     @property
     def data_organized(self):
         # Organize data. All tests have to have ran otherwise you get an error.
@@ -335,7 +336,7 @@ class francisAnalyzer:
                 },
                 "Low Contrast": {
                     "result": self.res_LCOD,
-                    "criteria": {"min": 6, "max": 8},
+                    "criteria": {"min": 6, "max": 9},
                     "unit": "spokes",
                     "image": self.dirs["png"]+"francis_contrast.png",
                     "display_range": [0  ,9  ],
@@ -529,7 +530,7 @@ class francisAnalyzer:
             # Show the plot
             # plt.show()
             # Save figure
-            plt.savefig(self.dirs["png"]+f"Longterm_{testname}.png")
+            plt.savefig(self.dirs["png"]+f"Longterm_{testname}_francis.png")
             plt.close()
 
         
@@ -554,3 +555,16 @@ class francisAnalyzer:
         
         pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report.pdf')
 
+    def runall(self):
+        self.resolution(False, True)
+        self.low_contrast(False, True)
+        self.uniformity(False, True)
+        self.size(False, True)
+        self.grid(False, True)
+        self.thickness(False, True)
+        self.position(False, True)
+        self.ghosting(False, True)
+
+        self.add2csv()
+        self.create_report()
+        self.create_longterm_report()

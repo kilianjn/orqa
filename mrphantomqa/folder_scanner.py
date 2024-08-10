@@ -37,9 +37,9 @@ class dicomFolderScanner:
         _create_volume(aquNum): Private method to create a 3D volume for a specific acquisition number.
     """
 
-    def __init__(self, folder_path, rescan = False, **kwargs):
+    def __init__(self, folder_path:str=None, rescan = False, **kwargs):
         print("")
-        self.folder_path = folder_path
+        self.folder_path = folder_path if os.path.exists(str(folder_path)) else self._askForPath()
         self.rescan = rescan
 
         self.all_sequences = None # sequence name keys
@@ -51,6 +51,14 @@ class dicomFolderScanner:
         self.metadata = None
 
         self.imagedata = None
+
+    def _askForPath(self):
+        while True:
+            path = str(input("Type the path of the desired DICOM directory: \n"))
+            if os.path.exists(path):
+                return path
+            else:
+                print("Path does not exist. Try anew.")
 
     def _scan_folder(self):
         dicom_files = {}
@@ -80,10 +88,14 @@ class dicomFolderScanner:
         self.all_sequences = list(dicom_files.keys())
         self.all_dcmfiles = dicom_files
         
-    def menu_gui(self):
+    def menu_gui(self, autoMode=False):
         while True:
-            print("\nPlease select a sequence by entering the corresponding number:")
             sequences = [x for x in self.all_sequences if not "PhoenixZIPReport" in x]
+            if autoMode:
+                self.choose_scan(sequences[len(sequences)-1])
+                break
+            
+            print("\nPlease select a sequence by entering the corresponding number:")
             for idx, sequence in enumerate(sequences):
                 print(f"{idx + 1}. {sequence}")
 

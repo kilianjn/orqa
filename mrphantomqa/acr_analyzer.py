@@ -12,7 +12,7 @@ from .utils.methods import functions as utilfunc
 
 class acrAnalyzer:
     def __init__(self, data) -> None:
-        self.imagedata_loc  = data.imagedata[0]
+        self.imagedata_loc  = data.imagedata[0] if hasattr(data, 'imagedata') else None
         self.metadata       = data.metadata if hasattr(data, 'metadata') else None
         
         self.scannername    = self.metadata[0x00080080].value
@@ -33,18 +33,21 @@ class acrAnalyzer:
         self.res_PGA        = None
         self.res_LCOD       = None
 
-        self.results        = {}
+        self._data_organized    = None
 
-        self.criteria       = {
-            "Geometric Accuracy":                 {"min": 142,"max": 148},
-            "Low Contrast Object Detectability":  {"min": 6},
-            "Image Intensity Uniformity":         {"min": 80},
-            "Slice Thickness":                    {"min": 4, "max": 6},
-            "Slice Position":                     {"min":-4,"max": 4},
-            "Percent Signal Ghosting":            {"max": 5}
+        self.longtermdata       = {}
+
+        # Make folders
+        self.dirs               = {     # KEEP OS.SEP!!!
+            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/acr/tempimg" + f"{os.sep}",
+            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/acr/csv" + f"{os.sep}",
+            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/acr/reportacr" + f"{os.sep}",
+            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/acr/reportacr" + f"{os.sep}"
         }
 
-        self.longtermdata   = {}
+        for filetype, dir_to_save_to in self.dirs.items():
+            if not os.path.exists(dir_to_save_to):
+                os.makedirs(dir_to_save_to, exist_ok=True)
 
     def geometric_accuracy(self, showplot=False, print=False):
         #x, bins = methods.getHistogram(self.imagedata_loc)
@@ -66,10 +69,10 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test1.png")
+                plt.savefig(self.dirs["png"]+"ga_acr.png")
                 plt.close()
 
-        self.res_GA = np.mean([measureResults1[0],measureResults2[0],measureResults3[0]])
+        self.res_GA = np.round(np.mean([measureResults1[0],measureResults2[0],measureResults3[0]]),1)
             
 
     def high_contrast_spatial_resolution(self, showplot=False, print=False):
@@ -91,7 +94,7 @@ class acrAnalyzer:
         length, coords, border = acrfunc.sta.measureLength(img, self.pixelSpacing[1]) # Anstatt image border einsetzen.
         thld = utilfunc.getThreshold.otsuMethod(img)
         thld_rect = utilfunc.createThresholdImage(img, thld)
-        self.res_STA = length
+        self.res_STA = np.round(length,1)
 
         if showplot or print:
             plt.subplot(211)
@@ -107,7 +110,7 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test6.png")
+                plt.savefig(self.dirs["png"]+"sta_acr.png")
                 plt.close()
 
 
@@ -135,10 +138,10 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test2.png")
+                plt.savefig(self.dirs["png"]+"spa_acr.png")
                 plt.close()
 
-        self.res_SPA = np.mean([measureResults1[0],measureResults2[0]])
+        self.res_SPA = np.round(np.mean([measureResults1[0],measureResults2[0]]),1)
 
         pass
 
@@ -158,9 +161,9 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test3.png")
+                plt.savefig(self.dirs["png"]+"iiu_acr.png")
                 plt.close()
-        self.res_IIU = 100 * (1-(maxValue-minValue)/(maxValue+minValue))
+        self.res_IIU = np.round(100 * (1-(maxValue-minValue)/(maxValue+minValue)),1)
         return
     
     def percent_ghosting_ratio(self, showplot=False, print=False):
@@ -180,10 +183,10 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test4.png")
+                plt.savefig(self.dirs["png"]+"pgr_acr.png")
                 plt.close()
 
-        self.res_PGA = result
+        self.res_PGA = np.round(result,1)
         return
 
     def low_contrast_object_detectibility(self, method="peaks", showplot=False, print=False):
@@ -202,42 +205,87 @@ class acrAnalyzer:
             if showplot:
                 plt.show()
             if print:
-                plt.savefig("test5.png")
+                plt.savefig(self.dirs["png"]+"lcod_acr.png")
                 plt.close()
 
         self.res_LCOD = sum([measuedResults[i][0] for i in range(len(measuedResults))])
 
-
+    @property
+    def data_organized(self):
+        # Organize data. All tests have to have ran otherwise you get an error.
+        if self._data_organized is None:
+            self._data_organized = {
+                "GA": {
+                    "result": self.res_GA,
+                    # "deviation": self.res_GA_SD,
+                    "criteria": {"min": 185,"max": 195},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"ga_acr.png",
+                    "display_range": [180,200],
+                },
+                "LCOD": {
+                    "result": self.res_LCOD,
+                    "criteria": {"min": 32, "max": 40},
+                    "unit": "spokes",
+                    "image": self.dirs["png"]+"lcod_acr.png",
+                    "display_range": [25  ,41],
+                },
+                "IIU": {
+                    "result": self.res_IIU,
+                    "criteria": {"min": 80, "max": 100},
+                    "unit": "%",
+                    "image": self.dirs["png"]+"iiu_acr.png",
+                    "display_range": [0  ,100],
+                },
+                "STA": {
+                    "result": self.res_STA,
+                    "criteria": {"min": 4, "max": 6},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"sta_acr.png",
+                    "display_range": [0  ,15 ],
+                },
+                "SPA": {
+                    "result": self.res_SPA,
+                    "criteria": {"min":-4,"max": 4},
+                    "unit": "mm",
+                    "image": self.dirs["png"]+"sta_acr.png",
+                    "display_range": [-10 ,10  ],
+                },
+                "PGR": {
+                    "result": self.res_PGA,
+                    "criteria": {"min": 0, "max": 5},
+                    "unit": "%",
+                    "image": self.dirs["png"]+"pgr_acr.png",
+                    "display_range": [0  ,100],
+                }
+            } 
+        
+        return self._data_organized
 
     def add2csv(self):
         # csv header and data
-        self.results = {
-            "Date of measurement":                  f"{self.metadata[0x00080020].value}",
-            "Time of measurement":                  f"{self.metadata[0x00080031].value}",
-            "Time of evaluation":                   f"{datetime.now()}",
-            "Geometric Accuracy":                   f"{self.res_GA}",
-            "Low Contrast Object Detectability":    f"{self.res_LCOD}",
-            "Image Intensity Uniformity":           f"{self.res_IIU}",
-            "Slice Thickness":                      f"{self.res_STA}",
-            "Slice Position":                       f"{self.res_SPA}",
-            "Percent Signal Ghosting":              f"{self.res_PGA}"
+        savedata = {
+            "Date of measurement":  f"{self.metadata[0x00080020].value}",
+            "Time of measurement":  f"{self.metadata[0x00080031].value}",
+            "Time of evaluation":   f"{datetime.now()}"
         }
+        for testname, prop in self.data_organized.items():
+            savedata[testname] = prop["result"]
 
-        csv_filename = f'{self.scannername}_acr.csv'
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_acr.csv'
         write_header = not os.path.isfile(csv_filename)
         
         # Write CSV
         with open(csv_filename, 'a', newline='', encoding='utf-8') as csv_file:
             csv_writer = csv.writer(csv_file)
             if write_header:
-                header = self.results.keys()
+                header = savedata.keys()
                 csv_writer.writerow(header)
-            writedata = [self.results[key] for key in self.results.keys()]
+            writedata = [savedata[key] for key in savedata.keys()]
             csv_writer.writerow(writedata)
 
-
     def _check_criteria(self, test_name, value):
-        criteria = self.criteria.get(test_name)
+        criteria = self.data_organized.get(test_name).get("criteria")
         if not criteria:
             return False
 
@@ -248,70 +296,8 @@ class acrAnalyzer:
 
         return True
 
-    @property
-    def _results_organized(self):
-        combined_results_mapping = {
-            "Resolution": {
-                "result": self.res_RES,
-                "deviation": self.res_RES_SD,
-                "criteria": f'{self.criteria["Resolution"]["min"]} - {self.criteria["Resolution"]["max"]} mm',
-                "unit": "mm",
-                "image": "francis_res.png",
-            },
-            "Diameter": {
-                "result": self.res_GA,
-                "deviation": self.res_GA_SD,
-                "criteria": f'{self.criteria["Diameter"]["min"]} - {self.criteria["Diameter"]["max"]} mm',
-                "unit": "mm",
-                "image": "francis_size.png",
-            },
-            "Low Contrast": {
-                "result": self.res_LCOD,
-                "criteria": f'> {self.criteria["Low Contrast"]["min"]} spokes',
-                "unit": "spokes",
-                "image": "francis_contrast.png",
-            },
-            "Image Uniformity": {
-                "result": self.res_IIU,
-                "criteria": f'> {self.criteria["Image Uniformity"]["min"]}%',
-                "unit": "%",
-                "image": "francis_uniformity.png",
-            },
-            "Slice Thickness": {
-                "result": self.res_STA,
-                "criteria": f'{self.criteria["Slice Thickness"]["min"]} - {self.criteria["Slice Thickness"]["max"]} mm',
-                "unit": "mm",
-                "image": "francis_thickness.png",
-            },
-            "Slice Position": {
-                "result": self.res_SPA,
-                "criteria": f'{self.criteria["Slice Position"]["min"]} - {self.criteria["Slice Position"]["max"]} mm',
-                "unit": "mm",
-                "image": "francis_position.png",
-            },
-            "Grid Angle": {
-                "result": self.res_Grid_angle,
-                "criteria": f'{self.criteria["Grid Angle"]["min"]} - {self.criteria["Grid Angle"]["max"]} degrees',
-                "unit": "degrees",
-                "image": "francis_grid.png",
-            },
-            "Grid Size": {
-                "result": self.res_Grid_size,
-                "criteria": f'{self.criteria["Grid Size"]["min"]} - {self.criteria["Grid Size"]["max"]} mm2',
-                "unit": "mm2",
-                "image": "francis_grid.png",
-            },
-            "Ghosting": {
-                "result": self.res_Ghosting,
-                "criteria": f'< {self.criteria["Ghosting"]["max"]}%',
-                "unit": "%",
-                "image": "francis_ghosting.png",
-            }
-        }
-        return combined_results_mapping
-
     def create_report(self):
-        combined_results_mapping = self._results_organized
+        combined_results_mapping = self.data_organized
 
         # Creation of PDF
         ## Initialize the PDF
@@ -339,9 +325,10 @@ class acrAnalyzer:
         ## Fill Table
         for key, value in combined_results_mapping.items():
             result = value["result"]
-            criteria = value["criteria"]
             unit = value["unit"]
             deviation = value.get("deviation")
+
+            criteria = f'{value.get("criteria").get("min")} <= {value.get("criteria").get("max")} {unit}'
 
             ### Format the result with deviation if it exists
             result_str = f"{result}{unit}"
@@ -377,11 +364,10 @@ class acrAnalyzer:
             pdf.cell(200, 10, f"{metric_name}: {metric_value}{metric_deviation} {metric_unit}", ln=True)
 
         # Save the PDF
-        pdf.output(f"{self.scannername}_{self.creationdate}_QAreport.pdf")
-
+        pdf.output(self.dirs["srp"] + f"{self.scannername}_{self.creationdate}_QAreport.pdf")
 
     def _readcsv(self):
-        csv_filename = f'{self.scannername}_acr.csv'
+        csv_filename = self.dirs["csv"] + f'{self.scannername}_acr.csv'
         with open(csv_filename, 'r') as file:
             reader = csv.DictReader(file)
             # Collect all rows in a list
@@ -399,18 +385,7 @@ class acrAnalyzer:
     def create_longterm_report(self):
         self._readcsv()
 
-        tests_and_yrange = {   
-            "Resolution":           [0.3,2  ],
-            "Geometric Accuracy":   [140,150],
-            "Low Contrast":         [0  ,9  ],
-            "Image Uniformity":     [0  ,100],
-            "Slice Thickness":      [0  ,10 ],
-            "Slice Position":       [-5 ,5  ],
-            "Grid Size":            [28 ,44 ],
-            "Ghosting":             [0  ,100]
-        }
-
-        for testname in tests_and_yrange.keys():
+        for testname, value in self.data_organized.items():
             xdata_raw = self.longtermdata["Date of measurement"]
             dates = [datetime.strptime(date, '%Y%m%d') for date in xdata_raw]
 
@@ -420,7 +395,7 @@ class acrAnalyzer:
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
             plt.gcf().autofmt_xdate()  # Auto format date labels
             plt.plot(dates, ydata, marker='o')
-            plt.ylim(tests_and_yrange[testname])
+            plt.ylim(value["display_range"])
             # plt.ylim([0,10])
 
             # Adding titles and labels
@@ -430,7 +405,7 @@ class acrAnalyzer:
             # Show the plot
             # plt.show()
             # Save figure
-            plt.savefig(f"Longterm_{testname}.png")
+            plt.savefig(self.dirs["png"]+f"Longterm_{testname}_acr.png")
             plt.close()
 
         
@@ -438,25 +413,31 @@ class acrAnalyzer:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        # # Add a title page
-        # pdf.add_page()
-        # pdf.set_font("Arial", size=24)
-        # pdf.cell(200, 10, "Francis longterm Report", ln=True, align='C')
-
         pdf.set_font("Arial", size=12)
         x_offset = 10
         y_offset = 30
         width = 90
         height = 70
 
-        for i, testname in enumerate(tests_and_yrange.keys()):
+        for i, testname in enumerate(self.data_organized.keys()):
             if i % 3 == 0:
                 pdf.add_page()
                 y_offset = 30
-            pdf.image(f"Longterm_{testname}.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}_acr.png", x=x_offset, y=y_offset, w=width, h=height)
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
         
-        pdf.output(f'{self.scannername}_longterm_report.pdf')
+        pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report_acr.pdf')
 
+    def runall(self):
+        self.geometric_accuracy(False, True) # Done.
+        self.slice_position_accuracy(False, True) # Done.
+        self.image_intensity_uniformity(False, True) # Done.
+        self.percent_ghosting_ratio(False, True) # Done.
+        self.low_contrast_object_detectibility("edges1", False, True) # Done.
+        self.slice_thickness_accuracy(False, True) # Done.
+
+        self.add2csv()
+        self.create_report()
+        self.create_longterm_report()
