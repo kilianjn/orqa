@@ -30,7 +30,7 @@ for filepath in filepaths:
     # dfs.sequence_properties()
     dfs.get_data()
 
-    analyzer = mrphantomqa.acrAnalyzer(None)
+    analyzer = mrphantomqa.acrAnalyzer(dfs)
     analyzer.runall()
     del dfs, analyzer
 

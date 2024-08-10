@@ -42,10 +42,10 @@ class francisAnalyzer:
 
         # Make folders
         self.dirs               = {     # KEEP OS.SEP!!!
-            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/tempimages" + f"{os.sep}",
-            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/" + f"{os.sep}",
-            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}",
-            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/report" + f"{os.sep}"
+            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
+            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
+            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
+            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}"
         }
 
         for filetype, dir_to_save_to in self.dirs.items():
@@ -548,7 +548,7 @@ class francisAnalyzer:
             if i % 3 == 0:
                 pdf.add_page()
                 y_offset = 30
-            pdf.image(self.dirs["png"]+f"Longterm_{testname}.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}_francis.png", x=x_offset, y=y_offset, w=width, h=height)
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20

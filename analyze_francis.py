@@ -4,11 +4,11 @@ from mrphantomqa.francis_analyzer import francisAnalyzer
 
 
 paths = [
-    "/Volumes/KINGSTON/Francis/Kamera2/06242024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07152024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07222024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07302024",
-    "/Volumes/KINGSTON/Francis/Kamera2/08052024",
+    "/Volumes/KINGSTON/Francis/Kamera1/06242024",
+    "/Volumes/KINGSTON/Francis/Kamera1/07122024",
+    "/Volumes/KINGSTON/Francis/Kamera1/07222024",
+    "/Volumes/KINGSTON/Francis/Kamera1/07302024",
+    "/Volumes/KINGSTON/Francis/Kamera1/08052024"
 ]
 
 for path in paths:
@@ -22,18 +22,18 @@ for path in paths:
     # dfs.view_raw_image()
 
     Analyzer = francisAnalyzer(dfs)
-    # Analyzer.runall()
-    Analyzer.resolution(False, True)
-    Analyzer.low_contrast(False, True)
-    Analyzer.uniformity(False, True)
-    Analyzer.size(False, True)
-    Analyzer.grid(False, True)
-    Analyzer.thickness(False, True)
-    Analyzer.position(False, True)
-    Analyzer.ghosting(False ,True)
+    Analyzer.runall()
+    # Analyzer.resolution(False, True)
+    # Analyzer.low_contrast(False, True)
+    # Analyzer.uniformity(False, True)
+    # Analyzer.size(False, True)
+    # Analyzer.grid(False, True)
+    # Analyzer.thickness(False, True)
+    # Analyzer.position(False, True)
+    # Analyzer.ghosting(False ,True)
 
     # Analyzer.add2csv()
-    Analyzer.create_report()
+    # Analyzer.create_report()
     # Analyzer.create_longterm_report()
 
     del dfs, Analyzer
