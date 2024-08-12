@@ -10,7 +10,7 @@ from datetime import datetime
 from fpdf import FPDF
 
 class francisAnalyzer:
-    def __init__(self, data) -> None:
+    def __init__(self, data, workdir) -> None:
         self.imagedata          = data.imagedata[0] if hasattr(data, 'imagedata') else None
         self.metadata           = data.metadata if hasattr(data, 'metadata') else None
 
@@ -36,16 +36,24 @@ class francisAnalyzer:
         self.res_Grid_angle     = None  # Grid angle
         self.res_Ghosting       = None  # Percent Ghosting Ratio
 
-        self._data_organized    = None
+        self.workdir            = workdir
+        while True:
+            if os.path.exists(self.workdir):
+                break
+            else:
+                print("Path does not exist. Try anew.")
+                self.workdir = str(input("Type the path of the desired working directory: \n"))
 
-        self.longtermdata       = {}
+        self._data_organized    = None  # All important data and metadata is stored here to create the corresponding reports.
+
+        self.longtermdata       = {}    # Data from CSV files is stored here.
 
         # Make folders
         self.dirs               = {     # KEEP OS.SEP!!!
-            "png"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
-            "csv"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
-            "srp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}",
-            "lrp"   : "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/francis" + f"{os.sep}"
+            "png"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}imgs{os.sep}",
+            "csv"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}",
+            "srp"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}single_reports{os.sep}",
+            "lrp"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}"
         }
 
         for filetype, dir_to_save_to in self.dirs.items():

@@ -12,10 +12,11 @@ class dicomFolderScanner:
     A class for scanning and processing DICOM files in a folder.
 
     Main Output:
-        imagedata(numpy.ndarray): 4D Array (timestep, slice, imgY, imgX)
+        imagedata (numpy.ndarray): 4D Array (timestep, slice, imgY, imgX)
 
     Parameters:
         folder_path (str): The path to the folder containing DICOM files.
+        rescan (bool): Whether to force a rescan of the folder, even if a previously saved scan exists.
 
     Attributes:
         folder_path (str): The path to the folder containing DICOM files.
@@ -23,18 +24,19 @@ class dicomFolderScanner:
         all_dcmfiles (dict): A dictionary where keys are sequence names and values are lists of corresponding DICOM file paths.
         sel_sequence (str): The selected sequence for analysis.
         sel_dcmfiles (dict): A dictionary where keys are acquisition numbers and values are lists of DICOM file paths for the selected sequence.
-        timeseries (numpy.ndarray): A 4D numpy array representing a time series of 3D volumes.
-        volume (numpy.ndarray): A 3D numpy array representing a volume for a specific acquisition number in the selected sequence.
+        metadata (dict): A dictionary containing metadata for the selected sequence.
+        imagedata (numpy.ndarray): A 4D numpy array containing the image data for the selected sequence.
 
     Methods:
-        list_scans(): Print a list of different scans in the folder.
-        choose_scan(listkey): Choose a scan based on the provided key.
-        image_properties(): Display information about the selected sequence, such as the number of slices, images in the time series, and dimensions.
-        view_raw_image: View a raw DICOM image.
+        list_scans(): Prints a list of different scans (sequences) available in the folder.
+        choose_scan(listkey:str): Chooses a scan based on the provided key from the list of sequences.
+        image_properties(): Displays information about the selected sequence, such as the number of slices, images in the time series, and dimensions.
+        view_raw_image(): Views a raw DICOM image from the selected sequence.
+        choose_scan_via_menu(autoMode:bool): Launches menu where the user can interactively choose a given scan. If automode is True the latest scan is automatically chosen.
 
     Private Methods:
-        _scan_folder(): Private method to scan the folder and organize DICOM files based on series and acquisition numbers.
-        _create_volume(aquNum): Private method to create a 3D volume for a specific acquisition number.
+        _askForPath(): Prompts the user to input a valid folder path if the provided path is invalid or not supplied.
+        _scan_folder(): Scans the folder and organizes DICOM files based on sequence names. If a saved scan exists, it will load it unless rescan is set to True.
     """
 
     def __init__(self, folder_path:str=None, rescan = False, **kwargs):
@@ -88,7 +90,7 @@ class dicomFolderScanner:
         self.all_sequences = list(dicom_files.keys())
         self.all_dcmfiles = dicom_files
         
-    def menu_gui(self, autoMode=False):
+    def choose_scan_via_menu(self, autoMode:bool=False):
         while True:
             sequences = [x for x in self.all_sequences if not "PhoenixZIPReport" in x]
             if autoMode:
@@ -115,7 +117,7 @@ class dicomFolderScanner:
             print(scan)
         print("")
 
-    def choose_scan(self, listkey):
+    def choose_scan(self, listkey:str):
         assert listkey in self.all_dcmfiles,"Key is not in Dictionary. Choose one from list_scans."
         self.sel_sequence = listkey
 
@@ -140,9 +142,6 @@ class dicomFolderScanner:
                     dicom_files[acquNum].append(filename)
             except Exception as e:
                 print(f"Error reading {filename}: {str(e)}")
-
-        # self.pixeldims = [float(i) for i in self.get_dtag(0x00280030, [1,1,1])]
-
 
         for key, value in tqdm(dicom_files.items(),"Sorting timesteps..."):
             value.sort(key=lambda x: pydicom.dcmread(x).InstanceNumber)

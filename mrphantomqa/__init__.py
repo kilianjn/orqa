@@ -16,13 +16,5 @@ import os
 from .folder_scanner import dicomFolderScanner
 from .glover_analyzer import gloverAnalyzer
 from .acr_analyzer import acrAnalyzer
+from .francis_analyzer import francisAnalyzer
 from .cylinderPhantom7t import cylinderAnalyzer
-
-
-def askForPath():
-    while True:
-        path = str(input("Type the path of the desired DICOM directory: \n"))
-        if os.path.exists(path):
-            return path
-        else:
-            print("Path does not exist. Try anew.")

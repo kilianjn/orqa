@@ -83,10 +83,10 @@ class functions:
             rowsum_conv = np.abs(np.convolve(rowsum,[1,-1],"valid"))
             a = rowsum_conv.shape[0]
             b = int(a*0.25)
-            border = np.where(rowsum_conv == np.max(rowsum_conv[b:-b]))[0][0] +1  # Edgecase fixen mit 2 minima/was wenn beide gleich lang. Idee: bei fehlschlag einfach mitte nehmen.
+            border = np.where(rowsum_conv[b:-b] == np.max(rowsum_conv[b:-b]))[0][0] +1  # Edgecase fixen mit 2 minima/was wenn beide gleich lang. Idee: bei fehlschlag einfach mitte nehmen.
 
-            upperhalf = imagedata[:border]
-            lowerhalf = imagedata[border+1:]
+            upperhalf = imagedata[:border+b]
+            lowerhalf = imagedata[border+b+1:]
 
             upperthldimg = utilfunc.createThresholdImage(upperhalf,thld)
             lowerthldimg = utilfunc.createThresholdImage(lowerhalf,thld)
@@ -100,7 +100,7 @@ class functions:
 
 
 
-            return meanLength, (np.max(upperBorder),np.min(upperBorder),np.max(lowerBorder),np.min(lowerBorder)), border
+            return meanLength, (np.max(upperBorder),np.min(upperBorder),np.max(lowerBorder),np.min(lowerBorder)), border+b
 
     class spa:
         """slice-Position-Accuracy"""
