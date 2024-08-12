@@ -1,5 +1,4 @@
 import mrphantomqa
-import mrphantomqa.francis_analyzer
 
 paths = [
     "/Volumes/KINGSTON/Francis/Kamera1/06242024",

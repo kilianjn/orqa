@@ -330,6 +330,8 @@ class functions:
                 plt.xlim(0, imagedata.shape[1]-1)
                 plt.ylim(0,imagedata.shape[0]-1)
                 # plt.axis('off')  # Turn off axis numbers and ticks
+                plt.xlabel("Left to right")
+                plt.ylabel("Posterior to anterior")
                 if showplot:
                     plt.show()
                 if savefig:

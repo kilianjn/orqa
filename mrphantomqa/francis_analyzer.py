@@ -104,6 +104,9 @@ class francisAnalyzer:
         if showplot or savefig:
             plt.imshow(img)
             plt.scatter(centerpoint[1],centerpoint[0], marker="x", color="red")
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
+
             for i in range(len(llCords)):
                 plt.plot(llCords[i][:,1],llCords[i][:,0], color="red")
             if showplot:
@@ -162,6 +165,8 @@ class francisAnalyzer:
             plt.subplot(122)
             plt.imshow(lineArraysByAngle)
             plt.title(f"{countedSpokes} spokes counted")
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             for i in spokePosition:
                 plt.hlines(i, 0, int(lineArraysByAngle.shape[1]-1), colors="red", alpha=0.3)
             if showplot:
@@ -195,6 +200,8 @@ class francisAnalyzer:
             plt.imshow(convolvedMaskedImg)
             plt.scatter(maxCoord[1],maxCoord[0],facecolors='none',edgecolors='r', s=10**2, label=f"max: {maxValue}")
             plt.scatter(minCoord[1],minCoord[0],facecolors='none',edgecolors='b', s=10**2, label=f"min: {minValue}")
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             plt.legend()
             if showplot:
                 plt.show()
@@ -218,6 +225,8 @@ class francisAnalyzer:
             plt.vlines(coords[2],ymin=y_half,ymax=y_half*2, color="red")
             plt.vlines(coords[3],ymin=y_half,ymax=y_half*2, color="red")
             plt.imshow(rect_img, cmap="bone")
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             if showplot:
                 plt.show()
             if savefig:
@@ -235,6 +244,8 @@ class francisAnalyzer:
             plt.hlines(lengths[0]-0.5 ,0,int(rectimg.shape[1]/2))
             plt.hlines(lengths[1]-0.5,int(rectimg.shape[1]/2), rectimg.shape[1]-1)
             plt.vlines(int(rectimg.shape[1]/2), lengths[0]-0.5, lengths[1]-0.5, colors="red")
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             if showplot:
                 plt.show()
             elif savefig:
@@ -287,6 +298,8 @@ class francisAnalyzer:
                 plt.plot(coord[:, 1], coord[:, 0], label=f"Length = {len}")
             plt.scatter(centerpoint[1], centerpoint[0], c='blue', marker='x')
             plt.legend()
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             if showplot:
                 plt.show()
             if savefig:
@@ -311,6 +324,8 @@ class francisAnalyzer:
             for i in imagemasks:
                 plt.imshow(np.ma.masked_array(self.imagedata[8], i))
             plt.gcf().text(0.81, 0.5, resultText, fontsize=10)
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
             if showplot:
                 plt.show()
             if print:
@@ -332,7 +347,8 @@ class francisAnalyzer:
                     "criteria": {"min": 0.5, "max": 1},
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_res.png",
-                    "display_range": [0.3,2  ],
+                    "display_range": [0.3,2],
+                    "description": ""
                 },
                 "Diameter": {
                     "result": self.res_GA,
@@ -341,6 +357,7 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_size.png",
                     "display_range": [140,150],
+                    "description": ""
                 },
                 "Low Contrast": {
                     "result": self.res_LCOD,
@@ -348,6 +365,7 @@ class francisAnalyzer:
                     "unit": "spokes",
                     "image": self.dirs["png"]+"francis_contrast.png",
                     "display_range": [0  ,9  ],
+                    "description": ""
                 },
                 "Image Uniformity": {
                     "result": self.res_IIU,
@@ -355,6 +373,7 @@ class francisAnalyzer:
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_uniformity.png",
                     "display_range": [0  ,100],
+                    "description": ""
                 },
                 "Slice Thickness": {
                     "result": self.res_STA,
@@ -362,6 +381,7 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_thickness.png",
                     "display_range": [0  ,10 ],
+                    "description": ""
                 },
                 "Slice Position": {
                     "result": self.res_SPA,
@@ -369,13 +389,15 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_position.png",
                     "display_range": [-5 ,5  ],
+                    "description": ""
                 },
                 "Grid Angle": {
                     "result": self.res_Grid_angle,
                     "criteria": {"min": 87,"max": 93},
                     "unit": "degrees",
                     "image": self.dirs["png"]+"francis_grid.png",
-                    "display_range": [0,95]
+                    "display_range": [0,95],
+                    "description": ""
                 },
                 "Grid Size": {
                     "result": self.res_Grid_size,
@@ -383,6 +405,7 @@ class francisAnalyzer:
                     "unit": "mm2",
                     "image": self.dirs["png"]+"francis_grid.png",
                     "display_range": [28 ,44 ],
+                    "description": ""
                 },
                 "Ghosting": {
                     "result": self.res_Ghosting,
@@ -390,6 +413,7 @@ class francisAnalyzer:
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_ghosting.png",
                     "display_range": [0  ,100],
+                    "description": ""
                 }
             } 
         
@@ -533,15 +557,14 @@ class francisAnalyzer:
 
             # Adding titles and labels
             plt.title(f'Longitudinal plot for {testname}')
-            plt.ylabel('Testresult')
+            plt.ylabel(f'Result [{self.data_organized["unit"]}]')
+            plt.xlabel("Date of test")
 
             # Show the plot
             # plt.show()
             # Save figure
             plt.savefig(self.dirs["png"]+f"Longterm_{testname}_francis.png")
             plt.close()
-
-        
 
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
