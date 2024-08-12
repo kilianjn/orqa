@@ -5,7 +5,9 @@ import csv
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
+import pandas as pd
 import os
+
 from datetime import datetime
 from fpdf import FPDF
 
@@ -24,17 +26,19 @@ class francisAnalyzer:
         if self.metadata.get(0x00280030) is not None: # Case INteroperability
             self.spacing        = [float(i) for i in self.metadata[0x00280030].value]
 
-        self.res_RES            = None  # Resolution
-        self.res_RES_SD         = None  # Resolution SD
-        self.res_GA             = None  # Geometric lenghts
-        self.res_GA_SD          = None  # Geometric lengths SD
-        self.res_LCOD           = None  # Low contrast
-        self.res_IIU            = None  # Image uniformity
-        self.res_STA            = None  # Slice thickness
-        self.res_SPA            = None  # Slice position
-        self.res_Grid_size      = None  # Grid size
-        self.res_Grid_angle     = None  # Grid angle
-        self.res_Ghosting       = None  # Percent Ghosting Ratio
+        self.res_RES                = None  # Resolution
+        self.res_RES_SD             = None  # Resolution SD
+        self.res_GA                 = None  # Geometric lenghts
+        self.res_GA_SD              = None  # Geometric lengths SD
+        self.res_LCOD               = None  # Low contrast
+        self.res_IIU                = None  # Image uniformity
+        self.res_STA                = None  # Slice thickness
+        self.res_SPA                = None  # Slice position
+        self.res_Grid_size          = None  # Grid size
+        self.res_Grid_angle         = None  # Grid angle
+        self.res_Grid_lines_hori    = None
+        self.res_Grid_lines_vert    = None
+        self.res_Ghosting           = None  # Percent Ghosting Ratio
 
         self.workdir            = workdir
         while True:
@@ -115,8 +119,8 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_res.png")
                 plt.close()
         
-        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2, 2)
-        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2, 2)
+        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2, 1)
+        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2, 1)
         return
 
     def low_contrast(self, showplot=False, savefig=False):
@@ -161,12 +165,14 @@ class francisAnalyzer:
             plt.subplot(121)
             plt.imshow(img, cmap="gray")
             plt.imshow(cutoutImage)
+            plt.xlabel("Left to right")
+            plt.ylabel("Posterior to anterior")
 
             plt.subplot(122)
             plt.imshow(lineArraysByAngle)
             plt.title(f"{countedSpokes} spokes counted")
-            plt.xlabel("Left to right")
-            plt.ylabel("Posterior to anterior")
+            plt.xlabel("Distance from center")
+            plt.ylabel("Angle")
             for i in spokePosition:
                 plt.hlines(i, 0, int(lineArraysByAngle.shape[1]-1), colors="red", alpha=0.3)
             if showplot:
@@ -209,14 +215,14 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_uniformity.png")
                 plt.close()
 
-        self.res_IIU = np.round(100 * (1-(maxValue-minValue)/(maxValue+minValue)),2)
+        self.res_IIU = np.round(100 * (1-(maxValue-minValue)/(maxValue+minValue)),1)
 
     def thickness(self, showplot=False, savefig=False):
         img = self.imagedata[6]
         rect_img = francisfunc.sta.cutoutRect(img)
 
         length, coords, border = francisfunc.sta.measureLength(rect_img, self.spacing[1]) # Anstatt image border einsetzen.
-        self.res_STA = np.round(length,2)
+        self.res_STA = np.round(length,1)
 
         if showplot or print:
             y_half = rect_img.shape[0]/2
@@ -252,7 +258,7 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_position.png")
                 plt.close()
 
-        self.res_SPA = np.round(length_diff * self.spacing[0],2)
+        self.res_SPA = np.round(length_diff * self.spacing[0],1)
         
         pass
 
@@ -271,6 +277,8 @@ class francisAnalyzer:
 
         self.res_Grid_size = np.round(squaresize,2)
         self.res_Grid_angle = np.round(np.rad2deg(angle_cross),2)
+        self.res_Grid_lines_hori = np.unique(lines[:,:,1], return_counts=True)[1][0]
+        self.res_Grid_lines_vert = np.unique(lines[:,:,1], return_counts=True)[1][1]
 
     def size(self, showplot=False, savefig=False):
         img = self.imagedata[2]
@@ -306,8 +314,8 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_size.png")
                 plt.close()
         
-        self.res_GA = np.round(np.mean([measureResults1[0], measureResults2[0]]),2)
-        self.res_GA_SD = np.round(np.std([measureResults1[0], measureResults2[0]]),2)
+        self.res_GA = np.round(np.mean([measureResults1[0], measureResults2[0]]),1)
+        self.res_GA_SD = np.round(np.std([measureResults1[0], measureResults2[0]]),1)
         return
 
     def ghosting(self, showplot=False, print=False):
@@ -332,7 +340,7 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_ghosting.png")
                 plt.close()
 
-        self.res_Ghosting = np.round(100 * result, 2)
+        self.res_Ghosting = np.round(100 * result, 1)
         return
 
 
@@ -348,7 +356,7 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_res.png",
                     "display_range": [0.3,2],
-                    "description": ""
+                    "description": """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis vitae nunc convallis, sed aliquet est consequat. Quisque non tellus sit amet arcu sodales laoreet. Morbi hendrerit lectus ac orci varius, eget aliquam nisl efficitur. Nunc malesuada elit sed urna lacinia, in semper odio bibendum. Praesent ornare eget erat non auctor. Vivamus molestie sem at arcu pharetra varius. Integer ex nisi, porttitor sit amet egestas vitae, facilisis vitae orci. Pellentesque pulvinar leo nec ante aliquet, vitae semper sapien dignissim. Nulla id massa at felis suscipit placerat et commodo sem. Ut vitae tortor molestie, cursus velit non, hendrerit risus. Sed tristique viverra libero, in tempus mi bibendum at. Nunc interdum, eros id blandit fermentum, lacus mauris imperdiet lectus, id placerat nunc sapien et turpis."""
                 },
                 "Diameter": {
                     "result": self.res_GA,
@@ -357,7 +365,7 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_size.png",
                     "display_range": [140,150],
-                    "description": ""
+                    "description": "sadfagdfb wvct4"
                 },
                 "Low Contrast": {
                     "result": self.res_LCOD,
@@ -365,7 +373,7 @@ class francisAnalyzer:
                     "unit": "spokes",
                     "image": self.dirs["png"]+"francis_contrast.png",
                     "display_range": [0  ,9  ],
-                    "description": ""
+                    "description": "sauefgbsaeuyyfcayu"
                 },
                 "Image Uniformity": {
                     "result": self.res_IIU,
@@ -391,21 +399,35 @@ class francisAnalyzer:
                     "display_range": [-5 ,5  ],
                     "description": ""
                 },
-                "Grid Angle": {
-                    "result": self.res_Grid_angle,
-                    "criteria": {"min": 87,"max": 93},
-                    "unit": "degrees",
-                    "image": self.dirs["png"]+"francis_grid.png",
-                    "display_range": [0,95],
-                    "description": ""
-                },
+                # "Grid Angle": {
+                #     "result": self.res_Grid_angle,
+                #     "criteria": {"min": 87,"max": 93},
+                #     "unit": "degrees",
+                #     "image": self.dirs["png"]+"francis_grid.png",
+                #     "display_range": [0,95],
+                #     "description": ""
+                # },
                 "Grid Size": {
                     "result": self.res_Grid_size,
                     "criteria": {"min":28, "max": 44},
                     "unit": "mm2",
                     "image": self.dirs["png"]+"francis_grid.png",
                     "display_range": [28 ,44 ],
-                    "description": ""
+                    "description": "",
+                },
+                "Grid Lines horizontal": {
+                    "result": self.res_Grid_lines_hori,
+                    "criteria": {"min":7, "max": 13},
+                    "unit": "Lines",
+                    "display_range": [0,15],
+                    "description": "",
+                },
+                "Grid Lines vertical": {
+                    "result": self.res_Grid_lines_vert,
+                    "criteria": {"min":7, "max": 13},
+                    "unit": "Lines",
+                    "display_range": [0,25],
+                    "description": "",
                 },
                 "Ghosting": {
                     "result": self.res_Ghosting,
@@ -416,7 +438,7 @@ class francisAnalyzer:
                     "description": ""
                 }
             } 
-        
+
         return self._data_organized
 
     def add2csv(self):
@@ -440,6 +462,13 @@ class francisAnalyzer:
                 csv_writer.writerow(header)
             writedata = [savedata[key] for key in savedata.keys()]
             csv_writer.writerow(writedata)
+
+        # Remove duplicates
+        df = pd.read_csv(csv_filename, sep=",")
+        df.drop_duplicates(subset=df.columns.difference(['Time of evaluation']), inplace=True)
+        df.sort_values(["Date of measurement"])
+        df.to_csv(csv_filename, index=False)
+        pass
 
     def _check_criteria(self, test_name, value):
         criteria = self.data_organized.get(test_name).get("criteria")
@@ -504,10 +533,13 @@ class francisAnalyzer:
         pdf.set_font("Arial", size=12)
 
         for key, value in combined_results_mapping.items():
+            if value.get("image") is None:
+                continue
             image_filename = value["image"]
             metric_name = key
             metric_value = value["result"]
             metric_unit = value["unit"]
+            metric_desc = value["description"]
 
             metric_deviation = f'+-{value["deviation"]}' if value.get("deviation") else ""
 
@@ -519,6 +551,12 @@ class francisAnalyzer:
             pdf.ln(20)
             pdf.set_font("Arial", size=12)
             pdf.cell(200, 10, f"{metric_name}: {metric_value}{metric_deviation} {metric_unit}", ln=True)
+            pdf.ln(80)
+            pdf.set_font("Arial", size=14)
+            pdf.cell(100,10, "Description")
+            pdf.set_font("Arial", size=12)
+            pdf.ln(10)
+            pdf.multi_cell(0,5,metric_desc, border=True)
 
         # Save the PDF
         pdf.output(self.dirs["srp"] + f"{self.scannername}_{self.creationdate}_QAreport.pdf")
@@ -557,7 +595,7 @@ class francisAnalyzer:
 
             # Adding titles and labels
             plt.title(f'Longitudinal plot for {testname}')
-            plt.ylabel(f'Result [{self.data_organized["unit"]}]')
+            plt.ylabel(f'Result [{value["unit"]}]')
             plt.xlabel("Date of test")
 
             # Show the plot
@@ -569,7 +607,7 @@ class francisAnalyzer:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", size=11)
         x_offset = 10
         y_offset = 30
         width = 90
@@ -579,7 +617,10 @@ class francisAnalyzer:
             if i % 3 == 0:
                 pdf.add_page()
                 y_offset = 30
-            pdf.image(self.dirs["png"]+f"Longterm_{testname}_francis.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}_francis.png", x=x_offset+100, y=y_offset, w=width, h=height)
+            pdf.multi_cell(95,5,"""
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis vitae nunc convallis, sed aliquet est consequat. Quisque non tellus sit amet arcu sodales laoreet. Morbi hendrerit lectus ac orci varius, eget aliquam nisl efficitur. Nunc malesuada elit sed urna lacinia, in semper odio bibendum. Praesent ornare eget erat non auctor. Vivamus molestie sem at arcu pharetra varius. Integer ex nisi, porttitor sit amet egestas vitae, facilisis vitae orci. Pellentesque pulvinar leo nec ante aliquet, vitae semper sapien dignissim. Nulla id massa at felis suscipit placerat et commodo sem. Ut vitae tortor molestie, cursus velit non, hendrerit risus. Sed tristique viverra libero, in tempus mi bibendum at. Nunc interdum, eros id blandit fermentum, lacus mauris imperdiet lectus, id placerat nunc sapien et turpis.
+                           """, border=True)
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
