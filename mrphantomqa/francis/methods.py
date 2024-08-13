@@ -1,10 +1,9 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+
 from scipy import ndimage
 
-#Debugging
-import mrphantomqa.utils.viewer as viw
 from ..utils.methods import functions as utilFunc
 
 class functions:
@@ -159,7 +158,7 @@ class functions:
 
         def countEdges(edgeImage):
             allAngles, length = edgeImage.shape
-            countThld = np.mean(edgeImage) + 2 * np.std(edgeImage)
+            countThld = np.mean(edgeImage) + 2.2 * np.std(edgeImage)
 
             peakcount = np.zeros((allAngles,8)) # per angle 1 positive and 1 negative threshold
             countedSpokes = 0
@@ -167,18 +166,19 @@ class functions:
 
             # allAngles = range(allAngles)
             relevantAngles = []
-            relevantAngles.append([9,21])
-            relevantAngles.append([56,68])
-            relevantAngles.append([101,111])
-            relevantAngles.append([145,156])
-            relevantAngles.append([189,203])
-            relevantAngles.append([235,246])
-            relevantAngles.append([280,291])
-            relevantAngles.append([325,336])
+            relevantAngles.append([  7, 22])
+            relevantAngles.append([ 55, 69])
+            relevantAngles.append([100,112])
+            relevantAngles.append([144,157])
+            relevantAngles.append([188,204])
+            relevantAngles.append([234,247])
+            relevantAngles.append([279,292])
+            relevantAngles.append([324,337])
 
             distances = []
-            for j in range(5): # Divide in 3 areas for peaks
-                distances.append(int((0.08 + 0.2*j)*length))
+            for j in range(4): # Divide in 3 areas for peaks
+                distances.append(int((0.08 + 0.23*j)*length))
+            distances.append(length-1)
 
             # Peakdetection
             for i in range(allAngles): #iterate through all angles

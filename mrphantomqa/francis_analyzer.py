@@ -159,7 +159,10 @@ class francisAnalyzer:
         images.append(lineArraysByAngle)
 
         countedSpokes, spokePosition = francisfunc.lcod.countEdges(lineArraysByAngle)
-
+        distances = []
+        for j in range(4): # Divide in 3 areas for peaks
+            distances.append(int((0.08 + 0.23*j)*lineArraysByAngle.shape[1]))
+        distances.append(lineArraysByAngle.shape[1]-1)
 
         if showplot or savefig:
             plt.subplot(121)
@@ -170,6 +173,7 @@ class francisAnalyzer:
 
             plt.subplot(122)
             plt.imshow(lineArraysByAngle)
+            plt.vlines(distances,0,lineArraysByAngle.shape[0]-1, colors="orange", alpha=0.3)
             plt.title(f"{countedSpokes} spokes counted")
             plt.xlabel("Distance from center")
             plt.ylabel("Angle")
@@ -380,7 +384,7 @@ class francisAnalyzer:
                     "criteria": {"min": 80, "max": 100},
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_uniformity.png",
-                    "display_range": [0  ,100],
+                    "display_range": [50 ,100],
                     "description": ""
                 },
                 "Slice Thickness": {
@@ -399,14 +403,6 @@ class francisAnalyzer:
                     "display_range": [-5 ,5  ],
                     "description": ""
                 },
-                # "Grid Angle": {
-                #     "result": self.res_Grid_angle,
-                #     "criteria": {"min": 87,"max": 93},
-                #     "unit": "degrees",
-                #     "image": self.dirs["png"]+"francis_grid.png",
-                #     "display_range": [0,95],
-                #     "description": ""
-                # },
                 "Grid Size": {
                     "result": self.res_Grid_size,
                     "criteria": {"min":28, "max": 44},
@@ -434,7 +430,7 @@ class francisAnalyzer:
                     "criteria": {"min": 0, "max": 5},
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_ghosting.png",
-                    "display_range": [0  ,100],
+                    "display_range": [0  ,50],
                     "description": ""
                 }
             } 
@@ -465,7 +461,7 @@ class francisAnalyzer:
 
         # Remove duplicates
         df = pd.read_csv(csv_filename, sep=",")
-        df.drop_duplicates(subset=df.columns.difference(['Time of evaluation']), inplace=True)
+        df.drop_duplicates(subset=df.columns.difference(['Time of evaluation']), inplace=True) # exclude TOE in exclusion
         df.sort_values(["Date of measurement"])
         df.to_csv(csv_filename, index=False)
         pass
@@ -624,7 +620,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis 
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
-        
+
         pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report.pdf')
 
     def runall(self):
