@@ -37,10 +37,13 @@ class gloverAnalyzer:
 
     """
 
-    def __init__(self, timeseries_data):
+    def __init__(self, timeseries_data, SVroi=21):
         assert len(timeseries_data.imagedata[:,9,:,:].shape) == 3,"Data has to have only 3 dimensions (time,space,space)"
         self.timeseries = timeseries_data.imagedata[:,9,:,:]
         self.metadata = timeseries_data.metadata
+        self.SVroi = SVroi
+
+        self.viewer = viewer
 
         self.scannername        = self.metadata[0x00080080].value
         self.creationdate       = self.metadata[0x00080012].value
@@ -115,32 +118,32 @@ class gloverAnalyzer:
     @property
     def snrSV(self):
         if self._snrSV is None:
-            signal_SV = functions.summaryValue(self.signalImage)
-            SD_spatialNoiseSV = np.std(functions.roi(self.staticSpatialNoiseImage))
+            signal_SV = functions.summaryValue(self.signalImage, self.SVroi)
+            SD_spatialNoiseSV = np.std(functions.roi(self.staticSpatialNoiseImage, self.SVroi))
             self._snrSV = np.round(signal_SV / SD_spatialNoiseSV / self.timeseries.shape[0],2)
         return self._snrSV
     
     @property
     def sfnrSV(self):
         if self._sfnrSV is None:
-            self._sfnrSV = np.round(functions.summaryValue(self.sfnrImage),2)
+            self._sfnrSV = np.round(functions.summaryValue(self.sfnrImage, self.SVroi),2)
         return self._sfnrSV
     
     @property
     def percentFluc(self):
         if self._percentFluc is None:
-            meanImageIntensity = functions.summaryValue(self.signalImage)
-            meanStandDev = functions.summaryValue(self.tempFlucImage)
+            meanImageIntensity = functions.summaryValue(self.signalImage, self.SVroi)
+            meanStandDev = functions.summaryValue(self.tempFlucImage, self.SVroi)
             self._percentFluc = np.round(100 * meanStandDev / meanImageIntensity,2)
         return self._percentFluc
 
     @property
     def residualsSVs(self):
         if self._residualsSVs is None:
-            detrendedSignalImage = functions.detrend_image(functions.roi(self.timeseries))
+            detrendedSignalImage = functions.detrend_image(functions.roi(self.timeseries, self.SVroi))
             residualsSV = np.empty(detrendedSignalImage.shape[0])
             for timestep in range(residualsSV.shape[0]):
-                residualsSV[timestep] = functions.summaryValue(detrendedSignalImage[timestep,:,:])
+                residualsSV[timestep] = functions.summaryValue(detrendedSignalImage[timestep,:,:], self.SVroi)
             self._residualsSVs = residualsSV
         return self._residualsSVs
 
@@ -155,9 +158,9 @@ class gloverAnalyzer:
         if self._drift is None:
             timeseries_SVs = np.empty(self.timeseries.shape[0])
             for timestep in range(self.timeseries.shape[0]):
-                timeseries_SVs[timestep] = functions.summaryValue(self.timeseries[timestep,:,:])
+                timeseries_SVs[timestep] = functions.summaryValue(self.timeseries[timestep,:,:], self.SVroi)
             fit = functions.quad_fit(timeseries_SVs)
-            self._drift = np.round(100 * (fit[0] - fit[-1]) / functions.summaryValue(self.signalImage),2)
+            self._drift = np.round(100 * (fit[0] - fit[-1]) / functions.summaryValue(self.signalImage, self.SVroi),2)
         return self._drift
 
 

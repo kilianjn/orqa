@@ -41,7 +41,7 @@ class dicomFolderScanner:
 
     def __init__(self, folder_path:str=None, rescan = False, **kwargs):
         print("")
-        self.folder_path = folder_path if os.path.exists(str(folder_path)) else self._askForPath()
+        self.folder_path = self._askForPath(folder_path)
         self.rescan = rescan
 
         self.all_sequences = None # sequence name keys
@@ -54,13 +54,12 @@ class dicomFolderScanner:
 
         self.imagedata = None
 
-    def _askForPath(self):
+    def _askForPath(self, path):
         while True:
-            path = str(input(f"The given path does not exist. Type the path of the desired DICOM directory: \n"))
-            if os.path.exists(path):
+            if os.path.exists(str(path)):
                 return path
-            else:
-                print("Path does not exist. Try anew.")
+            path = str(input(f"The given path does not exist({path})\nType the path of the desired DICOM directory: \n"))
+
 
     def _scan_folder(self):
         dicom_files = {}

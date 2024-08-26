@@ -36,8 +36,8 @@ class francisAnalyzer:
         self.res_SPA                = None  # Slice position
         self.res_Grid_size          = None  # Grid size
         self.res_Grid_angle         = None  # Grid angle
-        self.res_Grid_lines_hori    = None
-        self.res_Grid_lines_vert    = None
+        self.res_Grid_lines_hori    = None  # Detected grid lines horizontal
+        self.res_Grid_lines_vert    = None  # Detected grid lines vertical
         self.res_Ghosting           = None  # Percent Ghosting Ratio
 
         # # Evaluator Part - put in own class at some point
@@ -58,10 +58,10 @@ class francisAnalyzer:
 
         # Make folders
         self.dirs               = {     # KEEP OS.SEP!!!
-            "png"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}imgs{os.sep}",
-            "csv"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}",
-            "srp"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}single_reports{os.sep}",
-            "lrp"   : f"{self.workdir}" + f"{os.sep}francis_reports{os.sep}{self.scannername}{os.sep}"
+            "png"   : os.path.join(workdir, "francis_reports", self.scannername, "imgs", ""),
+            "csv"   : os.path.join(workdir, "francis_reports", self.scannername, ""),
+            "srp"   : os.path.join(workdir, "francis_reports", self.scannername, "single_reports", ""),
+            "lrp"   : os.path.join(workdir, "francis_reports", self.scannername, "")
         }
 
         for filetype, dir_to_save_to in self.dirs.items():
