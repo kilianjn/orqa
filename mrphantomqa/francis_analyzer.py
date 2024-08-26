@@ -11,14 +11,14 @@ import os
 from datetime import datetime
 from fpdf import FPDF
 
+# Debug
+from .utils import viewer as viw
+
 class francisAnalyzer:
     def __init__(self, data, workdir) -> None:
         self.imagedata          = data.imagedata[0] if hasattr(data, 'imagedata') else None
         self.metadata           = data.metadata if hasattr(data, 'metadata') else None
 
-        self.scannername        = self.metadata[0x00080080].value
-        self.creationdate       = self.metadata[0x00080012].value
-        
         self.spacing            = [1,1]
         # Get correct pixel spacing
         if self.metadata.get(0x52009230) is not None: # Case Enhanced save
@@ -40,12 +40,16 @@ class francisAnalyzer:
         self.res_Grid_lines_vert    = None
         self.res_Ghosting           = None  # Percent Ghosting Ratio
 
+        # # Evaluator Part - put in own class at some point
+        self.scannername        = self.metadata[0x00080080].value
+        self.creationdate       = self.metadata[0x00080012].value
+
         self.workdir            = workdir
         while True:
             if os.path.exists(self.workdir):
                 break
             else:
-                print("Path does not exist. Try anew.")
+                print("Path to given working directory does not exist. Try anew.")
                 self.workdir = str(input("Type the path of the desired working directory: \n"))
 
         self._data_organized    = None  # All important data and metadata is stored here to create the corresponding reports.
@@ -64,16 +68,16 @@ class francisAnalyzer:
             if not os.path.exists(dir_to_save_to):
                 os.makedirs(dir_to_save_to, exist_ok=True)
 
-    def resolution(self, showplot=False, savefig=False):
+    def resolution(self, showplot=False, savefig=False, offsetx=0, offsety=0):
         
         # Interpolation for smoother lines
         img = utilfunc.interpolateImage(self.imagedata[2])
 
         # Initial location of centerpoint
-        thld = int(0.8 * utilfunc.getThreshold.findPeak(img,11))
+        thld = int(utilfunc.getThreshold.otsuMethod(img))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
-        
+
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
 
         # Finding exact center using small mask over centerdot
@@ -81,6 +85,9 @@ class francisAnalyzer:
         tmp_center_thldImg = thld_img.copy()
         tmp_center_thldImg[centermask] = 0
         centerpoint = utilfunc.findCenter.centerOfMass(tmp_center_thldImg)
+
+        # OffsetDebug
+        centerpoint = (centerpoint[0]+offsety,centerpoint[1]-offsetx)
 
         # Donutmask
         mask = utilfunc.circularROI(thld_img,centerpoint,int(0.41*diameter))
@@ -119,23 +126,26 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_res.png")
                 plt.close()
         
-        self.res_RES = np.round((5 - (np.median(longestLength)/50 * 5))*2, 1)
-        self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2, 1)
+        self.res_RES = np.round((5 - (np.median(longestLength)/10))*2, 1)
+        self.res_RES_SD = np.round(np.std([(5 - (i/10))*2 for i in longestLength]),1)
+        # self.res_RES_SD = np.round((5 - (np.std(longestLength)/50 * 5))*2, 1)
         return
 
-    def low_contrast(self, showplot=False, savefig=False):
+    def low_contrast(self, showplot=False, savefig=False, offsety=0,offsetx=0):
 
         img = utilfunc.interpolateImage(self.imagedata[4])
 
-        thld = int(utilfunc.getThreshold.findPeak(img,10))
+        thld = int(utilfunc.getThreshold.otsuMethod(img) * 0.9) #90 percent to include little more of edges into thresholding
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
+        # OffsetDebug
+        centerpoint = (centerpoint[0]+offsety,centerpoint[1]-offsetx)
 
         images = []
 
         ## Cutout center and get appropiate masks
-        mask = utilfunc.cutoutStructureMask(thld_img, centerpoint)
-        mask = utilfunc.removeHoles(thld_img)
+        mask = ~utilfunc.cutoutStructureMask(thld_img, centerpoint)
+        mask = utilfunc.removeHoles(mask)
         thldMaskedImg = np.ma.masked_array(thld_img, mask)
 
         ## Data for mask
@@ -143,7 +153,7 @@ class francisAnalyzer:
         diameter = utilfunc.measureDistance(mask,center_new,0,[1,1])
         radius = diameter/2
 
-        circMask = utilfunc.circularROI(img, center_new,int(0.65*radius))
+        circMask = utilfunc.circularROI(img, center_new,int(0.9*radius))
 
         # Actual Computation
         cutoutImage = np.ma.masked_array(img, circMask)
@@ -175,8 +185,8 @@ class francisAnalyzer:
             plt.imshow(lineArraysByAngle)
             plt.vlines(distances,0,lineArraysByAngle.shape[0]-1, colors="orange", alpha=0.3)
             plt.title(f"{countedSpokes} spokes counted")
-            plt.xlabel("Distance from center")
-            plt.ylabel("Angle")
+            plt.xlabel("Distance from center [pixel]")
+            plt.ylabel("Angle [deg]")
             for i in spokePosition:
                 plt.hlines(i, 0, int(lineArraysByAngle.shape[1]-1), colors="red", alpha=0.3)
             if showplot:
@@ -194,11 +204,11 @@ class francisAnalyzer:
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
 
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
-        roiDiameter = int(0.32*diameter)
-        centermask = utilfunc.circularROI(img, centerpoint, roiDiameter)
+        roiRadius = int(0.7*(diameter/2))
+        centermask = utilfunc.circularROI(img, centerpoint, roiRadius)
 
 
-        kernelsize = int(0.15 * roiDiameter)
+        kernelsize = int(np.round(10/self.spacing[0],0)) # 1cm2 area of rect kernel
         kernel = np.ones((kernelsize,kernelsize))/(kernelsize**2)
         convolvedImg = utilfunc.convolveImage(img, kernel)
 
@@ -228,7 +238,7 @@ class francisAnalyzer:
         length, coords, border = francisfunc.sta.measureLength(rect_img, self.spacing[1]) # Anstatt image border einsetzen.
         self.res_STA = np.round(length,1)
 
-        if showplot or print:
+        if showplot or savefig:
             y_half = rect_img.shape[0]/2
             plt.vlines(coords[0],ymin=0,ymax=y_half)
             plt.vlines(coords[1],ymin=0,ymax=y_half)
@@ -288,7 +298,7 @@ class francisAnalyzer:
         img = self.imagedata[2]
 
         # Initial location of centerpoint
-        thld = int(0.8 * utilfunc.getThreshold.findPeak(img,10))
+        thld = int(utilfunc.getThreshold.otsuMethod(img))
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
         diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
@@ -307,7 +317,7 @@ class francisAnalyzer:
             plt.imshow(img, cmap='gray')
             for len, coord in [measureResults1, measureResults2]:
                 plt.scatter(coord[:, 1], coord[:, 0], c='red', marker='x')
-                plt.plot(coord[:, 1], coord[:, 0], label=f"Length = {len}")
+                plt.plot(coord[:, 1], coord[:, 0], label=f"Length = {np.round(len,1)}mm")
             plt.scatter(centerpoint[1], centerpoint[0], c='blue', marker='x')
             plt.legend()
             plt.xlabel("Left to right")
@@ -344,7 +354,7 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_ghosting.png")
                 plt.close()
 
-        self.res_Ghosting = np.round(100 * result, 1)
+        self.res_Ghosting = np.round(result, 1)
         return
 
 
@@ -430,7 +440,7 @@ class francisAnalyzer:
                     "criteria": {"min": 0, "max": 5},
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_ghosting.png",
-                    "display_range": [0  ,50],
+                    "display_range": [0  ,10],
                     "description": ""
                 }
             } 

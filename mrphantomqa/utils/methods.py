@@ -63,8 +63,11 @@ class functions:
                 com_y += (y * np.sum(tempimage[y,:]))/totalsignal
 
             if showplot:
-                plt.imshow(thldimage)
-                plt.scatter(com_x,com_y, marker="o")
+                plt.imshow(thldimage, cmap="gray")
+                plt.scatter(com_x,com_y, marker="x")
+                plt.xlabel("Left to right")
+                plt.ylabel("Posterior to anterior")
+                # plt.axis("off")
                 plt.show()
             return (round(com_y), round(com_x))
  

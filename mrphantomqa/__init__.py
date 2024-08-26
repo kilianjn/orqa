@@ -18,3 +18,4 @@ from .glover_analyzer import gloverAnalyzer
 from .acr_analyzer import acrAnalyzer
 from .francis_analyzer import francisAnalyzer
 from .cylinderPhantom7t import cylinderAnalyzer
+

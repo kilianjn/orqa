@@ -4,10 +4,10 @@ import mrphantomqa
 # folder_path = "/Volumes/KINGSTON/glover7T/qa_test_2_2023.11.30-16_05_23-STD-1.3.12.2.1107.5.99.3_19900101/Neuro_Vuxen_20231130_160526.300000"
 # folder_path = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/Data/23102614/55050000"
 folder_path = "/Volumes/SANDISK/Francis/cmrr_testscan200slices/Phantom^Francis_test_final_2024.07.25-12_31_30-DST~Patient1/Neuro_Vuxen_20240725_123146.500000"
-folder_path = "/Volumes/KINGSTON/glover7T/05082024/Phantom^Francis_Glover_2024.08.05-13_33_12-DST-1.3.12.2.1107.5.99.3_20000101/Neuro_Vuxen_20240805_133336.000000"
+folder_path = "/Volumes/KINGSTON/glover7T/cylinder/20240813"
 scanner = mrphantomqa.dicomFolderScanner(folder_path)
 scanner.list_scans()
-scanner.choose_scan("133804.879000 cmrr_mbep2d_se_11sl")
+scanner.choose_scan("124546.095000 cmrr_mbep2d_se_11sl")
 # scanner.sequence_properties()
 scanner.get_data()
 # scanner.view_raw_image()

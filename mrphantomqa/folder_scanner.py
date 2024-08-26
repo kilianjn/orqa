@@ -56,7 +56,7 @@ class dicomFolderScanner:
 
     def _askForPath(self):
         while True:
-            path = str(input("Type the path of the desired DICOM directory: \n"))
+            path = str(input(f"The given path does not exist. Type the path of the desired DICOM directory: \n"))
             if os.path.exists(path):
                 return path
             else:

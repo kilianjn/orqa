@@ -271,9 +271,11 @@ class functions:
                 print("No lines found at all.")
                 return [0,0], False, []
 
+            ## Angletolerance for horizontal and vertica lines
+            d_theta = np.deg2rad(20)
             ## Extract lines in certain angle region      
-            lines_hori_pre = [line for line in lines if line[0][1] < 0.02 or line[0][1] > np.pi - 0.02]
-            lines_vert_pre = [line for line in lines if 1.59 >= line[0][1] >= 1.55]
+            lines_vert_pre = [line for line in lines if line[0][1] < d_theta or line[0][1] > np.pi - d_theta]
+            lines_hori_pre = [line for line in lines if np.pi/2-d_theta <= line[0][1] <= np.pi/2+d_theta]
 
             if lines_hori_pre == [] or lines_vert_pre == []:
                 print("No gridlines found.")
@@ -285,13 +287,14 @@ class functions:
             thetas = [line[0][1] for line in lines_hori_pre]
             unique_thetas, counts = np.unique(thetas, return_counts=True)
             most_common_theta = unique_thetas[np.argmax(counts)]
-            lines_hori = np.array([line for line in lines_hori_pre if line[0][1] == most_common_theta])
+            lines_hori = np.sort(np.array([line for line in lines_hori_pre if line[0][1] == most_common_theta]), axis=0)
+
 
             ### Vertical lines
             thetas = [line[0][1] for line in lines_vert_pre]
             unique_thetas, counts = np.unique(thetas, return_counts=True)
             most_common_theta = unique_thetas[np.argmax(counts)]
-            lines_vert = np.array([line for line in lines_vert_pre if line[0][1] == most_common_theta])
+            lines_vert = np.sort(np.array([line for line in lines_vert_pre if line[0][1] == most_common_theta]), axis=0)
 
 
 
@@ -302,7 +305,7 @@ class functions:
             distance_hori = np.median([lines_hori[i+1][0][0] - lines_hori[i][0][0] for i in range(len(lines_hori)-1)]) - 1
             distance_vert = np.median([lines_vert[i+1][0][0] - lines_vert[i][0][0] for i in range(len(lines_vert)-1)]) - 1
 
-            squaresize_in_pixels = [distance_vert, distance_hori]
+            squaresize_in_pixels = [np.abs(distance_vert), np.abs(distance_hori)]
 
             angle_grid = np.abs(lines_vert[0][0][1] - lines_hori[0][0][1])
 
@@ -328,7 +331,7 @@ class functions:
 
                 plt.title("Detected Lines")
                 plt.xlim(0, imagedata.shape[1]-1)
-                plt.ylim(0,imagedata.shape[0]-1)
+                plt.ylim(imagedata.shape[0]-1,0)
                 # plt.axis('off')  # Turn off axis numbers and ticks
                 plt.xlabel("Left to right")
                 plt.ylabel("Posterior to anterior")
@@ -380,7 +383,8 @@ class functions:
 
             upperLength = np.max(upperBorder) - np.min(upperBorder)
             lowerLength = np.max(lowerBorder) - np.min(lowerBorder)
-            meanLength = 0.2 * (upperLength * lowerLength) / (upperLength + lowerLength) * spacing
+            # meanLength = 0.2 * (upperLength * lowerLength) / (upperLength + lowerLength) * spacing # ACR Spec formula
+            meanLength = np.mean([0.125 * i * spacing - 1 for i in [upperLength, lowerLength]]) # Mathematically reasonable formula
 
 
 
@@ -433,9 +437,9 @@ class functions:
     class psg:
         """Percent-Signal-Ghosting"""
         def calcPSG(imagedata, thldimg, center, showplot=False):
-            radius,_ = functions.ga.measureDistance(thldimg,center,0)
-            radius /= 2
-            centermask = utilFunc.circularROI(imagedata, center, 0.8*radius)
+            diameter = np.mean([utilFunc.measureDistance(thldimg, center, i) for i in [45, 135]])
+            radius = diameter/2
+            centermask = utilFunc.circularROI(imagedata, center, 0.7*radius)
 
             spaceTop = imagedata.shape[0] - center[0] - radius
             spaceBot = center[0] - radius

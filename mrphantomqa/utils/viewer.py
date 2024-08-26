@@ -46,11 +46,14 @@ def plot3D(data, title="3D Surface Plot", cmap='viridis'):
 
     plt.show()
 
-def plot2D(data, title="3D Surface Plot", cmap='viridis'):
+def plot2D(data, title="3D Surface Plot", cmap='gray'):
     """2D viewer for 2D array"""
     if len(data.shape) != 2:
         print(f"Data has {len(data.shape)} dimensions instead of the required 2")
         return
     
     plt.imshow(data, cmap=cmap)
+    plt.xlabel("Left to right")
+    plt.ylabel("Posterior to anterior")
+    # plt.axis("off")
     plt.show()
