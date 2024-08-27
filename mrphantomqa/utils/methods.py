@@ -239,18 +239,20 @@ class functions:
             print("Dimensions are wrong for interpolation. Insert only 2D arrays.")
             return imagedata
 
-        X_original = np.linspace(0, imagedata.shape[1] - 1, imagedata.shape[1])
-        Y_original = np.linspace(0, imagedata.shape[0] - 1, imagedata.shape[0])
+        interpolated_image = np.kron(imagedata, np.ones((resMultiple, resMultiple)))
 
-        ## Double the points in every direction
-        X = np.linspace(0, imagedata.shape[1] - 1, resMultiple * imagedata.shape[1])
-        Y = np.linspace(0, imagedata.shape[0] - 1, resMultiple * imagedata.shape[0])
+        # X_original = np.linspace(0, imagedata.shape[1] - 1, imagedata.shape[1])
+        # Y_original = np.linspace(0, imagedata.shape[0] - 1, imagedata.shape[0])
 
-        ## Interpolate here
-        spline = interpolate.interp2d(X_original, Y_original, imagedata,'cubic')
+        # ## Double the points in every direction
+        # X = np.linspace(0, imagedata.shape[1] - 1, resMultiple * imagedata.shape[1])
+        # Y = np.linspace(0, imagedata.shape[0] - 1, resMultiple * imagedata.shape[0])
 
-        ## Generate new Values
-        interpolated_image = spline(X, Y)
+        # ## Interpolate here
+        # spline = interpolate.interp2d(X_original, Y_original, imagedata,'cubic')
+
+        # ## Generate new Values
+        # interpolated_image = spline(X, Y)
 
         return interpolated_image
 
