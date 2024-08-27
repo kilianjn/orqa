@@ -239,7 +239,7 @@ class functions:
             print("Dimensions are wrong for interpolation. Insert only 2D arrays.")
             return imagedata
 
-        interpolated_image = np.kron(imagedata, np.ones((resMultiple, resMultiple)))
+        interpolated_image = np.kron(imagedata, np.ones((resMultiple, resMultiple), dtype=imagedata.dtype))
 
         # X_original = np.linspace(0, imagedata.shape[1] - 1, imagedata.shape[1])
         # Y_original = np.linspace(0, imagedata.shape[0] - 1, imagedata.shape[0])

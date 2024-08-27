@@ -166,14 +166,14 @@ class functions:
 
             # allAngles = range(allAngles)
             relevantAngles = []
-            relevantAngles.append([  7, 22])
-            relevantAngles.append([ 55, 69])
-            relevantAngles.append([100,112])
-            relevantAngles.append([144,157])
-            relevantAngles.append([188,204])
-            relevantAngles.append([234,247])
-            relevantAngles.append([279,292])
-            relevantAngles.append([324,337])
+            relevantAngles.append([  5, 24])
+            relevantAngles.append([ 53, 71])
+            relevantAngles.append([ 98,114])
+            relevantAngles.append([142,159])
+            relevantAngles.append([186,206])
+            relevantAngles.append([234,249])
+            relevantAngles.append([277,294])
+            relevantAngles.append([322,339])
 
             distances = []
             for j in range(4): # Divide in 3 areas for peaks

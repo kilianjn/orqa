@@ -27,7 +27,7 @@ for path in paths:
     #     print(Analyzer.res_RES)
 
     # Analyzer.resolution(False)
-    # Analyzer.low_contrast(False)
+    # Analyzer.low_contrast(True)
     # Analyzer.uniformity(False)
     # Analyzer.size(False)
     # Analyzer.grid(False)

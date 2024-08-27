@@ -135,7 +135,7 @@ class francisAnalyzer:
 
         img = utilfunc.interpolateImage(self.imagedata[4])
 
-        thld = int(utilfunc.getThreshold.otsuMethod(img) * 0.9) #90 percent to include little more of edges into thresholding
+        thld = int(utilfunc.getThreshold.otsuMethod(img)) #90 percent to include little more of edges into thresholding
         thld_img = utilfunc.createThresholdImage(img,thld)
         centerpoint = utilfunc.findCenter.centerOfMassFilled(thld_img)
         # OffsetDebug
@@ -143,26 +143,29 @@ class francisAnalyzer:
 
         images = []
 
-        ## Cutout center and get appropiate masks
-        mask = ~utilfunc.cutoutStructureMask(thld_img, centerpoint)
-        mask = utilfunc.removeHoles(mask)
-        thldMaskedImg = np.ma.masked_array(thld_img, mask)
+        # Global centerpoint approach
+        diameter = np.mean([utilfunc.measureDistance(thld_img,centerpoint,x) for x in [45,135]])
+        radius = diameter/2 * 0.65
 
-        ## Data for mask
-        center_new = utilfunc.findCenter.centerOfMass(mask)
-        diameter = utilfunc.measureDistance(mask,center_new,0,[1,1])
-        radius = diameter/2
+        # # Masked approcah
+        # ## Cutout center and get appropiate masks
+        # mask = ~utilfunc.cutoutStructureMask(thld_img, centerpoint)
+        # mask = utilfunc.removeHoles(mask)
+        # centerpoint = utilfunc.findCenter.centerOfMass(mask)
+        # diameter = utilfunc.measureDistance(mask,centerpoint,0,[1,1])
+        # radius = diameter/2 * 0.9
 
-        circMask = utilfunc.circularROI(img, center_new,int(0.9*radius))
+
+        circMask = utilfunc.circularROI(img, centerpoint,radius)
 
         # Actual Computation
         cutoutImage = np.ma.masked_array(img, circMask)
-        lineArraysByAngle, _ = francisfunc.lcod.radialTrafo_LCOD(cutoutImage, center_new, -105)
+        lineArraysByAngle, _ = francisfunc.lcod.radialTrafo_LCOD(cutoutImage, centerpoint, -105)
 
         # Generate edgeimage
         edgeImage = []
         for angle in range(lineArraysByAngle.shape[0]):
-            edgeImage.append(np.convolve(lineArraysByAngle[angle], [1,0,-1], "valid"))
+            edgeImage.append(np.convolve(lineArraysByAngle[angle], [1,1,1,0,-1,-1,-1], "valid"))
         edgeImage = np.array(edgeImage)
         lineArraysByAngle = edgeImage[:,:int(edgeImage.shape[1]*0.95)]
 
