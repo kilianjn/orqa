@@ -49,7 +49,7 @@ class francisAnalyzer:
             if os.path.exists(self.workdir):
                 break
             else:
-                print("Path to given working directory does not exist. Try anew.")
+                print(f"Path to given working directory does not exist ({self.workdir}). Try anew.")
                 self.workdir = str(input("Type the path of the desired working directory: \n"))
 
         self._data_organized    = None  # All important data and metadata is stored here to create the corresponding reports.
@@ -275,7 +275,7 @@ class francisAnalyzer:
                 plt.savefig(self.dirs["png"]+"francis_position.png")
                 plt.close()
 
-        self.res_SPA = np.round(length_diff * self.spacing[0],1)
+        self.res_SPA = np.round((length_diff/2) * self.spacing[0],1)
         
         pass
 
@@ -292,7 +292,7 @@ class francisAnalyzer:
 
         francisfunc.grid.printImage(img_grid_pre, lines, showplot, savefig, self.dirs["png"])
 
-        self.res_Grid_size = np.round(squaresize,2)
+        self.res_Grid_size = np.round(squaresize,1)
         self.res_Grid_angle = np.round(np.rad2deg(angle_cross),2)
         self.res_Grid_lines_hori = np.unique(lines[:,:,1], return_counts=True)[1][0]
         self.res_Grid_lines_vert = np.unique(lines[:,:,1], return_counts=True)[1][1]
@@ -363,42 +363,42 @@ class francisAnalyzer:
 
     @property
     def data_organized(self):
-        # Organize data. All tests have to have ran otherwise you get an error.
+        # Organize data. All tests have to have ran otherwise you get an error later on.
         if self._data_organized is None:
             self._data_organized = {
                 "Resolution": {
                     "result": self.res_RES,
                     "deviation": self.res_RES_SD,
-                    "criteria": {"min": 0.5, "max": 1},
+                    "criteria": {"min": np.round(self.spacing[0]*0.6,1), "max": np.round(self.spacing[0]*1.4,1)},
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_res.png",
                     "display_range": [0.3,2],
-                    "description": """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis vitae nunc convallis, sed aliquet est consequat. Quisque non tellus sit amet arcu sodales laoreet. Morbi hendrerit lectus ac orci varius, eget aliquam nisl efficitur. Nunc malesuada elit sed urna lacinia, in semper odio bibendum. Praesent ornare eget erat non auctor. Vivamus molestie sem at arcu pharetra varius. Integer ex nisi, porttitor sit amet egestas vitae, facilisis vitae orci. Pellentesque pulvinar leo nec ante aliquet, vitae semper sapien dignissim. Nulla id massa at felis suscipit placerat et commodo sem. Ut vitae tortor molestie, cursus velit non, hendrerit risus. Sed tristique viverra libero, in tempus mi bibendum at. Nunc interdum, eros id blandit fermentum, lacus mauris imperdiet lectus, id placerat nunc sapien et turpis."""
+                    "description": "The module consists of 12 triangles arranged around a center point. The triangles work as a continuous measure of resolution by measuring how close thetwo triangle sides can be to each other before there is no sufficient contrast anymore to distinguish triangle from background."
                 },
                 "Diameter": {
                     "result": self.res_GA,
                     "deviation": self.res_GA_SD,
-                    "criteria": {"min": 142,"max": 148},
+                    "criteria": {"min": 144,"max": 152},
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_size.png",
-                    "display_range": [140,150],
-                    "description": "sadfagdfb wvct4"
+                    "display_range": [140,156],
+                    "description": "The phantoms inner diameter is measured to determine correct spatial resolution."
                 },
                 "Low Contrast": {
                     "result": self.res_LCOD,
-                    "criteria": {"min": 6, "max": 9},
+                    "criteria": {"min": 6, "max": 8},
                     "unit": "spokes",
                     "image": self.dirs["png"]+"francis_contrast.png",
                     "display_range": [0  ,9  ],
-                    "description": "sauefgbsaeuyyfcayu"
+                    "description": "The module consists of a disk where 12 spokes go from the centerpoint outwards. Each spoke consists of four circular cutouts with increasing size form the center. he number of visible spokes gives an indication of the scanner's capability to resolve contrasts. "
                 },
                 "Image Uniformity": {
                     "result": self.res_IIU,
                     "criteria": {"min": 80, "max": 100},
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_uniformity.png",
-                    "display_range": [50 ,100],
-                    "description": ""
+                    "display_range": [50 ,110],
+                    "description": "The image is smoothed by convolving it with a rectangle kernel. Next the highest and lowest point of the convolved image is determined and the values are used for the calculation of the intensity uniformity via the equation from the ACR manual."
                 },
                 "Slice Thickness": {
                     "result": self.res_STA,
@@ -406,23 +406,23 @@ class francisAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_thickness.png",
                     "display_range": [0  ,10 ],
-                    "description": ""
+                    "description": "It is analog to the ACR tests in which the slice position is measured by having two opposite 45 degree ramps meeting in the middle of their incling, resulting in two rectangles in an image which, if equally long, indicates to correct slice positioning."
                 },
                 "Slice Position": {
                     "result": self.res_SPA,
-                    "criteria": {"min":-4,"max": 4},
+                    "criteria": {"min":-3,"max": 3},
                     "unit": "mm",
                     "image": self.dirs["png"]+"francis_position.png",
                     "display_range": [-5 ,5  ],
-                    "description": ""
+                    "description": "It is analog to the ACR tests in which the slice position is measured by having two opposite tunnels meeting in the middle of their incling, resulting in two rectangles in an image whose length indicate how thick the slice is."
                 },
                 "Grid Size": {
                     "result": self.res_Grid_size,
-                    "criteria": {"min":28, "max": 44},
+                    "criteria": {"min":30, "max": 44},
                     "unit": "mm2",
                     "image": self.dirs["png"]+"francis_grid.png",
-                    "display_range": [28 ,44 ],
-                    "description": "",
+                    "display_range": [28 ,46 ],
+                    "description": "This module checks for warping of straight lines as well as the correct size representation in the transversal plane. The slice shows a grid of squares which are separated by grid lines from one another. The inner squares have a length of 6mm and the grid lines are 1mm thick.",
                 },
                 "Grid Lines horizontal": {
                     "result": self.res_Grid_lines_hori,
@@ -435,7 +435,7 @@ class francisAnalyzer:
                     "result": self.res_Grid_lines_vert,
                     "criteria": {"min":7, "max": 13},
                     "unit": "Lines",
-                    "display_range": [0,25],
+                    "display_range": [0,15],
                     "description": "",
                 },
                 "Ghosting": {
@@ -443,8 +443,8 @@ class francisAnalyzer:
                     "criteria": {"min": 0, "max": 5},
                     "unit": "%",
                     "image": self.dirs["png"]+"francis_ghosting.png",
-                    "display_range": [0  ,10],
-                    "description": ""
+                    "display_range": [-1  ,10],
+                    "description": " The same area as in the Image Intensity Uniformity test is masked out in addition to four ellipses top, bottom, left and right of the phantom. The PSG is calculated according to the ACR manual."
                 }
             } 
 
@@ -484,9 +484,9 @@ class francisAnalyzer:
         if not criteria:
             return False
 
-        if "min" in criteria and value <= criteria["min"]:
+        if "min" in criteria and value < criteria["min"]:
             return False
-        if "max" in criteria and value >= criteria["max"]:
+        if "max" in criteria and value > criteria["max"]:
             return False
 
         return True
@@ -598,6 +598,8 @@ class francisAnalyzer:
             # Plot the data
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
             plt.gcf().autofmt_xdate()  # Auto format date labels
+            plt.axhline(value["criteria"]["min"], color = "g")
+            plt.axhline(value["criteria"]["max"], color = "g")
             plt.plot(dates, ydata, marker='o')
             plt.ylim(value["display_range"])
             # plt.ylim([0,10])
@@ -618,7 +620,7 @@ class francisAnalyzer:
 
         pdf.set_font("Arial", size=11)
         x_offset = 10
-        y_offset = 30
+        y_offset = 0
         width = 90
         height = 70
 
@@ -627,9 +629,8 @@ class francisAnalyzer:
                 pdf.add_page()
                 y_offset = 30
             pdf.image(self.dirs["png"]+f"Longterm_{testname}_francis.png", x=x_offset+100, y=y_offset, w=width, h=height)
-            pdf.multi_cell(95,5,"""
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis vitae nunc convallis, sed aliquet est consequat. Quisque non tellus sit amet arcu sodales laoreet. Morbi hendrerit lectus ac orci varius, eget aliquam nisl efficitur. Nunc malesuada elit sed urna lacinia, in semper odio bibendum. Praesent ornare eget erat non auctor. Vivamus molestie sem at arcu pharetra varius. Integer ex nisi, porttitor sit amet egestas vitae, facilisis vitae orci. Pellentesque pulvinar leo nec ante aliquet, vitae semper sapien dignissim. Nulla id massa at felis suscipit placerat et commodo sem. Ut vitae tortor molestie, cursus velit non, hendrerit risus. Sed tristique viverra libero, in tempus mi bibendum at. Nunc interdum, eros id blandit fermentum, lacus mauris imperdiet lectus, id placerat nunc sapien et turpis.
-                           """, border=True)
+            pdf.set_xy(x_offset, y_offset+10)
+            pdf.multi_cell(95,5,f"{self.data_organized[testname]['description']}")
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
@@ -649,3 +650,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta felis 
         self.add2csv()
         self.create_report()
         self.create_longterm_report()
+
+        # if os.path.exists(self.dirs["png"]):
+        #     shutil.rmtree(self.dirs["png"])
+            
