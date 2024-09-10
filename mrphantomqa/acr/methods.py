@@ -116,7 +116,7 @@ class functions:
             line2 = np.sum(imgROI[:,x2_offset])
             lengthDifference = line1 - line2
 
-            print(lengthDifference)
+            # print(lengthDifference)
             if showplot:
                 plt.axvline(centerCoord[1])
                 plt.axvline(x1_offset, linestyle="dotted")
@@ -200,8 +200,8 @@ class functions:
 
             for slice in [7,8,9,10]:
                 ## Get general data
-                thld = utilfunc.getThreshold.findPeak(imagedata[slice],10)
-                thldimg = utilfunc.createThresholdImage(imagedata[slice], thld*0.8)
+                thld = utilfunc.getThreshold.otsuMethod(imagedata[slice]) * 1.5
+                thldimg = utilfunc.createThresholdImage(imagedata[slice], thld)
                 center = utilfunc.findCenter.centerOfMass(thldimg)
 
                 ## Cutout center and get appropiate masks
@@ -257,7 +257,7 @@ class functions:
                     # Generate edgeimage
                     edgeImage = []
                     for angle in range(lineArraysByAngle.shape[0]):
-                        edgeImage.append(np.convolve(lineArraysByAngle[angle], [1,0,-1], "valid"))
+                        edgeImage.append(np.convolve(lineArraysByAngle[angle], [1,1,1,0,-1,-1,-1], "valid"))
                     edgeImage = np.array(edgeImage)
                     lineArraysByAngle = edgeImage[:,:int(edgeImage.shape[1]*0.95)]
 
@@ -267,7 +267,7 @@ class functions:
                     count.append(countedSpokes)
                     spokes.append(spokePosition)
 
-            print(sum(count))
+            # print(sum(count))
 
             return tuple(zip(count, images, spokes))
 
@@ -432,7 +432,7 @@ class functions:
 
         def countEdges1(edgeImage, showplot=False):
             allAngles, length = edgeImage.shape
-            countThld = np.mean(edgeImage) + 1.5 * np.std(edgeImage)
+            countThld = np.mean(edgeImage) + 2 * np.std(edgeImage)
 
             peakcount = np.zeros((allAngles,6)) # per angle positive and negative threshold
             countedSpokes = 0

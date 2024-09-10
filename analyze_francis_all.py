@@ -45,18 +45,6 @@ for path in paths:
 
     Analyzer = mrphantomqa.francisAnalyzer(dfs, workdir)
     Analyzer.runall()
-    # for i in range(-5,6):
-    #     Analyzer.resolution(offset=i)
-    #     print(Analyzer.res_RES)
-
-    # Analyzer.resolution(False)
-    # Analyzer.low_contrast(False)
-    # Analyzer.uniformity(False)
-    # Analyzer.size(False)
-    # Analyzer.grid(False)
-    # Analyzer.thickness(False)
-    # Analyzer.position(False)
-    # Analyzer.ghosting(False)
 
     del dfs, Analyzer
 

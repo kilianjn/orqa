@@ -10,17 +10,17 @@ if os.path.exists(os.path.join(WORKDIR,"francis_reports")):
 # DANGERRRRRRRRRRRR
 
 sequences = [
+    "124457.265000 optimal_deg-5",
+    "124240.591000 optimal_deg-4",
+    "124023.882000 optimal_deg-3",
+    "123807.400000 optimal_deg-2",
+    "123550.786000 optimal_deg-1",
     "122211.627000 optimal",
     "122428.077000 optimal_deg+1",
     "122644.798000 optimal_deg+2",
     "122901.323000 optimal_deg+3",
     "123117.765000 optimal_deg+4",
     "123334.266000 optimal_deg+5",
-    "123550.786000 optimal_deg-1",
-    "123807.400000 optimal_deg-2",
-    "124023.882000 optimal_deg-3",
-    "124240.591000 optimal_deg-4",
-    "124457.265000 optimal_deg-5"
 ]
 for sequence in sequences:
     

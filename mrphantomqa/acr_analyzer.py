@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import os
+import pandas as pd
 
 from datetime import datetime
 from fpdf import FPDF
@@ -38,7 +39,7 @@ class acrAnalyzer:
             if os.path.exists(self.workdir):
                 break
             else:
-                print("Path does not exist. Try anew.")
+                print(f"Path to given working directory does not exist ({self.workdir}). Try anew.")
                 self.workdir = str(input("Type the path of the desired working directory: \n"))
 
         self._data_organized    = None  # All important data and metadata is stored here to create the corresponding reports.
@@ -47,10 +48,10 @@ class acrAnalyzer:
 
         # Make folders
         self.dirs               = {     # KEEP OS.SEP!!!
-            "png"   : f"{self.workdir}" + f"{os.sep}acr_reports{os.sep}{self.scannername}{os.sep}imgs{os.sep}",
-            "csv"   : f"{self.workdir}" + f"{os.sep}acr_reports{os.sep}{self.scannername}{os.sep}",
-            "srp"   : f"{self.workdir}" + f"{os.sep}acr_reports{os.sep}{self.scannername}{os.sep}single_reports{os.sep}",
-            "lrp"   : f"{self.workdir}" + f"{os.sep}acr_reports{os.sep}{self.scannername}{os.sep}"
+            "png"   : os.path.join(workdir, "acr_reports", self.scannername, "imgs", ""),
+            "csv"   : os.path.join(workdir, "acr_reports", self.scannername, ""),
+            "srp"   : os.path.join(workdir, "acr_reports", self.scannername, "single_reports", ""),
+            "lrp"   : os.path.join(workdir, "acr_reports", self.scannername, "")
         }
 
         for filetype, dir_to_save_to in self.dirs.items():
@@ -59,7 +60,7 @@ class acrAnalyzer:
 
     def geometric_accuracy(self, showplot=False, print=False):
         #x, bins = methods.getHistogram(self.imagedata_loc)
-        peak_value = utilfunc.getThreshold.findPeak(self.imagedata_loc[0],10)
+        peak_value = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[0])
         thldImage = utilfunc.createThresholdImage(self.imagedata_loc[0], peak_value/2)
         comy, comx = utilfunc.findCenter.centerOfMassFilled(thldImage)
 
@@ -89,7 +90,7 @@ class acrAnalyzer:
         return self.res_HCSR
     
     def slice_thickness_accuracy(self,showplot=False, print=False):
-        thldvalue = utilfunc.getThreshold.findPeak(self.imagedata_loc[0], 10)
+        thldvalue = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[0])
         thldimg = utilfunc.createThresholdImage(self.imagedata_loc[0], thldvalue/2)
         center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
@@ -124,13 +125,13 @@ class acrAnalyzer:
 
 
     def slice_position_accuracy(self, showplot=False, print=False):
-        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[0],10)
+        thld = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[0])
         thld_image = utilfunc.createThresholdImage(self.imagedata_loc[0], thld/3)
         center = utilfunc.findCenter.centerOfMassFilled(thld_image)
 
         measureResults1 = acrfunc.spa.getPositionDifference(thld_image, center)
 
-        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[10],10)
+        thld = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[10])
         thld_image = utilfunc.createThresholdImage(self.imagedata_loc[10], thld/3)
         center = utilfunc.findCenter.centerOfMassFilled(thld_image)
 
@@ -154,7 +155,7 @@ class acrAnalyzer:
         pass
 
     def image_intensity_uniformity(self, showplot=False, print=False):
-        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[6],10)
+        thld = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[6])
         thldimg = utilfunc.createThresholdImage(self.imagedata_loc[6], thld/2)
         center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
@@ -175,7 +176,7 @@ class acrAnalyzer:
         return
     
     def percent_ghosting_ratio(self, showplot=False, print=False):
-        thld = utilfunc.getThreshold.findPeak(self.imagedata_loc[6],10)
+        thld = utilfunc.getThreshold.otsuMethod(self.imagedata_loc[6])
         thldimg = utilfunc.createThresholdImage(self.imagedata_loc[6], thld/2)
         center = utilfunc.findCenter.centerOfMassFilled(thldimg)
 
@@ -225,46 +226,51 @@ class acrAnalyzer:
             self._data_organized = {
                 "GA": {
                     "result": self.res_GA,
-                    # "deviation": self.res_GA_SD,
-                    "criteria": {"min": 185,"max": 195},
+                    "criteria": {"min": 187,"max": 193},
                     "unit": "mm",
                     "image": self.dirs["png"]+"ga_acr.png",
-                    "display_range": [180,200],
+                    "display_range": [185,195],
+                    "description": ""
                 },
                 "LCOD": {
                     "result": self.res_LCOD,
                     "criteria": {"min": 32, "max": 40},
                     "unit": "spokes",
                     "image": self.dirs["png"]+"lcod_acr.png",
-                    "display_range": [25  ,41],
+                    "display_range": [29  ,41],
+                    "description": ""
                 },
                 "IIU": {
                     "result": self.res_IIU,
                     "criteria": {"min": 80, "max": 100},
                     "unit": "%",
                     "image": self.dirs["png"]+"iiu_acr.png",
-                    "display_range": [0  ,100],
+                    "display_range": [60 ,110],
+                    "description": ""
                 },
                 "STA": {
                     "result": self.res_STA,
                     "criteria": {"min": 4, "max": 6},
                     "unit": "mm",
                     "image": self.dirs["png"]+"sta_acr.png",
-                    "display_range": [0  ,15 ],
+                    "display_range": [2  ,8 ],
+                    "description": ""
                 },
                 "SPA": {
                     "result": self.res_SPA,
-                    "criteria": {"min":-4,"max": 4},
+                    "criteria": {"min":-5,"max": 5},
                     "unit": "mm",
                     "image": self.dirs["png"]+"sta_acr.png",
-                    "display_range": [-10 ,10  ],
+                    "display_range": [-6 ,6  ],
+                    "description": ""
                 },
                 "PGR": {
                     "result": self.res_PGA,
                     "criteria": {"min": 0, "max": 5},
                     "unit": "%",
                     "image": self.dirs["png"]+"pgr_acr.png",
-                    "display_range": [0  ,100],
+                    "display_range": [-1  ,10],
+                    "description": ""
                 }
             } 
         
@@ -292,14 +298,21 @@ class acrAnalyzer:
             writedata = [savedata[key] for key in savedata.keys()]
             csv_writer.writerow(writedata)
 
+        # Remove duplicates
+        df = pd.read_csv(csv_filename, sep=",")
+        df.drop_duplicates(subset=df.columns.difference(['Time of evaluation']), inplace=True) # exclude TOE in exclusion
+        df.sort_values(["Date of measurement"], inplace=True)
+        df.to_csv(csv_filename, index=False)
+        pass
+
     def _check_criteria(self, test_name, value):
         criteria = self.data_organized.get(test_name).get("criteria")
         if not criteria:
             return False
 
-        if "min" in criteria and value <= criteria["min"]:
+        if "min" in criteria and value < criteria["min"]:
             return False
-        if "max" in criteria and value >= criteria["max"]:
+        if "max" in criteria and value > criteria["max"]:
             return False
 
         return True
@@ -359,6 +372,7 @@ class acrAnalyzer:
             metric_name = key
             metric_value = value["result"]
             metric_unit = value["unit"]
+            metric_desc = value["description"]
 
             metric_deviation = f'+-{value["deviation"]}' if value.get("deviation") else ""
 
@@ -370,6 +384,12 @@ class acrAnalyzer:
             pdf.ln(20)
             pdf.set_font("Arial", size=12)
             pdf.cell(200, 10, f"{metric_name}: {metric_value}{metric_deviation} {metric_unit}", ln=True)
+            pdf.ln(80)
+            pdf.set_font("Arial", size=14)
+            pdf.cell(100,10, "Description")
+            pdf.set_font("Arial", size=12)
+            pdf.ln(10)
+            pdf.multi_cell(0,5,metric_desc, border=True)
 
         # Save the PDF
         pdf.output(self.dirs["srp"] + f"{self.scannername}_{self.creationdate}_QAreport.pdf")
@@ -402,13 +422,16 @@ class acrAnalyzer:
             # Plot the data
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
             plt.gcf().autofmt_xdate()  # Auto format date labels
+            plt.axhline(value["criteria"]["min"], color = "g")
+            plt.axhline(value["criteria"]["max"], color = "g")
             plt.plot(dates, ydata, marker='o')
             plt.ylim(value["display_range"])
             # plt.ylim([0,10])
 
             # Adding titles and labels
             plt.title(f'Longitudinal plot for {testname}')
-            plt.ylabel('Testresult')
+            plt.ylabel(f'Result [{value["unit"]}]')
+            plt.xlabel("Date of test")
 
             # Show the plot
             # plt.show()
@@ -416,14 +439,12 @@ class acrAnalyzer:
             plt.savefig(self.dirs["png"]+f"Longterm_{testname}_acr.png")
             plt.close()
 
-        
-
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", size=11)
         x_offset = 10
-        y_offset = 30
+        y_offset = 0
         width = 90
         height = 70
 
@@ -431,12 +452,15 @@ class acrAnalyzer:
             if i % 3 == 0:
                 pdf.add_page()
                 y_offset = 30
-            pdf.image(self.dirs["png"]+f"Longterm_{testname}_acr.png", x=x_offset, y=y_offset, w=width, h=height)
+            pdf.image(self.dirs["png"]+f"Longterm_{testname}_acr.png", x=x_offset+100, y=y_offset, w=width, h=height)
+            pdf.set_xy(x_offset, y_offset+10)
+            pdf.multi_cell(95,5,f"{self.data_organized[testname]['description']}")
             pdf.set_xy(x_offset, y_offset + height + 5)
             # pdf.cell(200, 100, testname, ln=True)
             y_offset += height + 20
-        
-        pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report_acr.pdf')
+
+        pdf.output(self.dirs["lrp"] + f'{self.scannername}_longterm_report.pdf')
+
 
     def runall(self):
         self.geometric_accuracy(False, True) # Done.

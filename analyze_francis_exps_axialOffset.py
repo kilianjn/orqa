@@ -10,17 +10,17 @@ if os.path.exists(os.path.join(WORKDIR,"francis_reports")):
 # DANGERRRRRRRRRRRR
 
 sequences = [
+    "124427.981000 t1_offset_F_-5",
+    "124212.162000 t1_offset_F_-4",
+    "123956.280000 t1_offset_F_-3",
+    "123740.486000 t1_offset_F_-2",
+    "123524.600000 t1_offset_F_-1",
     "122149.721000 t1_tse_tf1soSE_9sl_medFilter",
     "122405.479000 t1_offset_F_+1",
     "122621.358000 t1_offset_F_+2",
     "122837.199000 t1_offset_F_+3",
     "123052.971000 t1_offset_F_+4",
     "123308.858000 t1_offset_F_+5",
-    "123524.600000 t1_offset_F_-1",
-    "123740.486000 t1_offset_F_-2",
-    "123956.280000 t1_offset_F_-3",
-    "124212.162000 t1_offset_F_-4",
-    "124427.981000 t1_offset_F_-5"
 ]
 for sequence in sequences:
     
