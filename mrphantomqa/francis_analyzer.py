@@ -57,7 +57,7 @@ class francisAnalyzer:
         self.longtermdata       = {}    # Data from CSV files is stored here.
 
         # Make folders
-        self.dirs               = {     # KEEP OS.SEP!!!
+        self.dirs               = {
             "png"   : os.path.join(workdir, "francis_reports", self.scannername, "imgs", ""),
             "csv"   : os.path.join(workdir, "francis_reports", self.scannername, ""),
             "srp"   : os.path.join(workdir, "francis_reports", self.scannername, "single_reports", ""),
