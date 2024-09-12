@@ -96,6 +96,9 @@ class functions:
         if imagedata is None:
             print("No time series data available")
             return
+        
+        if imagedata.shape[0] %2 == 0: # Check for uneven amount of timesteps and pop the first if so.
+            imagedata = imagedata[1:]
 
         timesteps, height, width = imagedata.shape
 
