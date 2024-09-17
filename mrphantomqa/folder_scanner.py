@@ -65,7 +65,7 @@ class dicomFolderScanner:
         dicom_files = {}
         if not self.rescan and os.path.isfile(os.path.join(self.folder_path, "dicomDirectory.txt")): # Look for dirFile
             dicom_files = json.load(open(os.path.join(self.folder_path, "dicomDirectory.txt")))
-            self.all_sequences = list(dicom_files.keys())
+            self.all_sequences = sorted(list(dicom_files.keys()), key=lambda x: float(x[:12]))
             self.all_dcmfiles = dicom_files
             print("Dicom Directory found and loaded in...")
             return
@@ -85,8 +85,8 @@ class dicomFolderScanner:
                     print(f"Error reading {filename}: {str(e)}")
         print("Writing dirFile...")
         json.dump(dicom_files, open(os.path.join(self.folder_path, "dicomDirectory.txt"),'w'))
-        
-        self.all_sequences = list(dicom_files.keys())
+
+        self.all_sequences = sorted(list(dicom_files.keys()), key=lambda x: float(x[:12]))
         self.all_dcmfiles = dicom_files
         
     def choose_scan_via_menu(self, autoMode:bool=False):
@@ -112,7 +112,8 @@ class dicomFolderScanner:
 
     def list_scans(self):
         print("\nList of different scans in the folder:")
-        for scan in [x for x in self.all_sequences if not "PhoenixZIPReport" in x]:
+        allscans = [x for x in self.all_sequences if not "PhoenixZIPReport" in x]
+        for scan in allscans:
             print(scan)
         print("")
 

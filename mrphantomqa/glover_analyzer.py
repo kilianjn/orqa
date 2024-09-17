@@ -143,7 +143,7 @@ class gloverAnalyzer:
         if self._snrSV is None:
             signal_SV = functions.summaryValue(self.signalImage, self.SVroi)
             SD_spatialNoiseSV = np.std(functions.roi(self.staticSpatialNoiseImage, self.SVroi))
-            self._snrSV = np.round(signal_SV / SD_spatialNoiseSV,2)
+            self._snrSV = np.round(signal_SV / SD_spatialNoiseSV * np.sqrt(self.timesteps),2)
         return self._snrSV
 
     @property

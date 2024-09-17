@@ -50,22 +50,3 @@ for filepath in filepaths:
     analyzer.runall()
     del dfs, analyzer
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

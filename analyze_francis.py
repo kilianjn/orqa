@@ -1,37 +1,9 @@
 import mrphantomqa
 
 paths = [
-    "/Volumes/KINGSTON/Francis/Kamera1/06242024",
-    "/Volumes/KINGSTON/Francis/Kamera1/07122024",
-    "/Volumes/KINGSTON/Francis/Kamera1/07222024",
-    "/Volumes/KINGSTON/Francis/Kamera1/07302024",
-    "/Volumes/KINGSTON/Francis/Kamera1/08052024",
-    "/Volumes/KINGSTON/Francis/Kamera1/08122024",
-    "/Volumes/KINGSTON/Francis/Kamera1/08192024",
-    "/Volumes/KINGSTON/Francis/Kamera1/08272024",
-    "/Volumes/KINGSTON/Francis/Kamera1/09092024",
-
-    "/Volumes/KINGSTON/Francis/Kamera2/06242024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07152024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07222024",
-    "/Volumes/KINGSTON/Francis/Kamera2/07302024",
-    "/Volumes/KINGSTON/Francis/Kamera2/08052024",
-    "/Volumes/KINGSTON/Francis/Kamera2/08132024",
-    "/Volumes/KINGSTON/Francis/Kamera2/08192024",
-    "/Volumes/KINGSTON/Francis/Kamera2/08282024",
-    "/Volumes/KINGSTON/Francis/Kamera2/09092024",
-
-    "/Volumes/KINGSTON/Francis/Kamera13/06242024",
-    "/Volumes/KINGSTON/Francis/Kamera13/07122024",
-    "/Volumes/KINGSTON/Francis/Kamera13/07222024",
-    "/Volumes/KINGSTON/Francis/Kamera13/07302024",
-    "/Volumes/KINGSTON/Francis/Kamera13/08052024",
-    "/Volumes/KINGSTON/Francis/Kamera13/08122024",
-    "/Volumes/KINGSTON/Francis/Kamera13/08192024",
-    "/Volumes/KINGSTON/Francis/Kamera13/08272024",
-    "/Volumes/KINGSTON/Francis/Kamera13/09092024"
+    "/Volumes/KINGSTON/francis t1_t2/Phantom^Francis_2024.08.30-12_04_54-DST-1.3.12.2.1107.5.99.3_20000101/Neuro_Vuxen_20240830_120510.000000/t2_tse_tf1soSE_9sl_medFilter_5_MR",
 ]
-workdir = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code"
+workdir = "/Users/rameshjain/Documents/Studium/M. Sc. Masteruppsats/Code/thesiswork/t2"
 
 for path in paths:
     

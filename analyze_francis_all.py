@@ -37,7 +37,7 @@ for path in paths:
     
     dfs = mrphantomqa.dicomFolderScanner(path)
     dfs.choose_scan_via_menu(True)
-    # dfs.list_scans()
+    dfs.list_scans()
     # dfs.choose_scan("123939.620000 t1_tse_tf1soSE_9sl_medFilter")
     # dfs.sequence_properties()
     dfs.get_data()
@@ -45,6 +45,7 @@ for path in paths:
 
     Analyzer = mrphantomqa.francisAnalyzer(dfs, workdir)
     Analyzer.runall()
+    # Analyzer.resolution(True)
 
     del dfs, Analyzer
 
