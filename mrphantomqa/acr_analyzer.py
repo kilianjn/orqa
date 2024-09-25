@@ -230,7 +230,7 @@ class acrAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"ga_acr.png",
                     "display_range": [185,195],
-                    "description": ""
+                    "description": "The phantoms inner diameter is measured to determine correct spatial resolution."
                 },
                 "LCOD": {
                     "result": self.res_LCOD,
@@ -238,7 +238,7 @@ class acrAnalyzer:
                     "unit": "spokes",
                     "image": self.dirs["png"]+"lcod_acr.png",
                     "display_range": [29  ,41],
-                    "description": ""
+                    "description": "The phantom houses 4 disks with diffferent thicknesses where 10 spokes go from the centerpoint outwards. Each spoke consists of four circular cutouts with increasing size form the center. he number of visible spokes gives an indication of the scanner's capability to resolve contrasts. "
                 },
                 "IIU": {
                     "result": self.res_IIU,
@@ -246,7 +246,7 @@ class acrAnalyzer:
                     "unit": "%",
                     "image": self.dirs["png"]+"iiu_acr.png",
                     "display_range": [60 ,110],
-                    "description": ""
+                    "description": "The image is smoothed by convolving it with a rectangle kernel. Next the highest and lowest point of the convolved image is determined and the values are used for the calculation of the intensity uniformity via the equation from the ACR manual."
                 },
                 "STA": {
                     "result": self.res_STA,
@@ -254,15 +254,15 @@ class acrAnalyzer:
                     "unit": "mm",
                     "image": self.dirs["png"]+"sta_acr.png",
                     "display_range": [2  ,8 ],
-                    "description": ""
+                    "description": "It is analog to the ACR tests in which the slice position is measured by having two opposite 45 degree ramps meeting in the middle of their incling, resulting in two rectangles in an image which, if equally long, indicates to correct slice positioning."
                 },
                 "SPA": {
                     "result": self.res_SPA,
                     "criteria": {"min":-5,"max": 5},
                     "unit": "mm",
-                    "image": self.dirs["png"]+"sta_acr.png",
+                    "image": self.dirs["png"]+"spa_acr.png",
                     "display_range": [-6 ,6  ],
-                    "description": ""
+                    "description": "It is analog to the ACR tests in which the slice position is measured by having two opposite tunnels meeting in the middle of their incling, resulting in two rectangles in an image whose length indicate how thick the slice is."
                 },
                 "PGR": {
                     "result": self.res_PGA,
@@ -270,7 +270,7 @@ class acrAnalyzer:
                     "unit": "%",
                     "image": self.dirs["png"]+"pgr_acr.png",
                     "display_range": [-1  ,10],
-                    "description": ""
+                    "description": "The same area as in the Image Intensity Uniformity test is masked out in addition to four ellipses top, bottom, left and right of the phantom. The PSG is calculated according to the ACR manual."
                 }
             } 
         
