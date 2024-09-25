@@ -8,5 +8,5 @@ dfs = mrphantomqa.dicomFolderScanner(path_to_dicom)
 dfs.choose_scan_via_menu()
 dfs.get_data()
 
-Analyzer = mrphantomqa.francisAnalyzer(dfs, savedir)
+Analyzer = mrphantomqa.gloverAnalyzer(dfs, savedir)
 Analyzer.runall()
