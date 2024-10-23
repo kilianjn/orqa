@@ -34,7 +34,7 @@ _path\_to\_dicom_ is the path the dicom data is stored at.
 _savedir_ is the path where the reports will be saved.
 
 Two objects are initialized
-_dicomFolderScanner_ prepares the Dicom data and produces a 4D array (time, slice, Y, X).
+**dicomFolderScanner** prepares the Dicom data and produces a 4D array (time, slice, Y, X).
 - _Choose\_scan\_via\_menu()_ shows menu and operator can choose a scan. With the flag _True_, the latest scan in the folder will be chosen automatically.
 - _dfs.list_scans_ can be used alternativaly to show a list of all scans inside a folder and a specific scan be used via _dfs.choose\_scan("SEQUENCE\_NAME")_ . 
 - _get\_data()_ creates the 4D array (time, slice, y, x) with metadata stored at _dfs.metadata_ .
