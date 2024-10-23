@@ -174,3 +174,4 @@ __pycache__/
 !analyze_acr.py
 !analyze_francis.py
 !analyze_glover.py
+!conda_env.yml

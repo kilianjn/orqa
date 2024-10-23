@@ -238,7 +238,7 @@ class francisAnalyzer:
         img = self.imagedata[6]
         rect_img = francisfunc.sta.cutoutRect(img)
 
-        length, coords, border = francisfunc.sta.measureLength(rect_img, self.spacing[1]) # Anstatt image border einsetzen.
+        length, coords, border = francisfunc.sta.measureLength(rect_img, self.spacing[1]) 
         self.res_STA = np.round(length,1)
 
         if showplot or savefig:
