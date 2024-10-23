@@ -39,7 +39,8 @@ Two objects are initialized.
 - _dfs.list_scans_ can be used alternativaly to show a list of all scans inside a folder and a specific scan be used via _dfs.choose\_scan("SEQUENCE\_NAME")_ . 
 - _get\_data()_ creates the 4D array (time, slice, y, x) with metadata stored at _dfs.metadata_ .
 
-***{francis|glover|acr}Analyzer*** analyzed the dicom data according to the three proposed protocols \*. 
+***{francis|glover|acr}Analyzer*** analyzed the dicom data according to the three proposed protocols \*.  
+_*The OrQA protocol is currently referred by the name Francis in the software for historical reasons_
 - _runall_ runs all necessary methods in order to evaluate the data and outputting results in the following way:
 
 <img src="./graphics/folders.png" width="40%" />
@@ -48,4 +49,3 @@ Two objects are initialized.
 
 
 
-*The OrQA protocol is currently referred by the name Francis in the software for historical reasons
