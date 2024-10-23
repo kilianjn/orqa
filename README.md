@@ -6,6 +6,11 @@ The Open regular Quality Assurance (OrQA) Protocol is inspired by the ACR Protoc
 
 ![OrQA Phantom render](./graphics/orqa.png?raw=true "OrQA Phantom render")
 
+<p float="left">
+  <img src="./graphics/orqa.png" width="40%" />
+  <img src="./graphics/orqa_photo.JPG" width="40%" /> 
+</p>
+
 The OrQA Phantom consists of a cylindrical case which measures 160mm in outer diameter and 142mm in height, not including the lid. The inner part of the phantom is 148mm in diameter and 132mm in height. The inner part houses four rails at the side of the walls. This case houses the modules and is filled with saline solution which is MR-visible. Earlier versions were filled with pure water but had problems with signal outages at 7T caused by suboptimal electric conductivity. The used materials used for the phantom are polyethylene terephthalate glycol (PETG) and polylactide (PLA) which are MR-opaque and have a similar susceptibility to water.
 
 ![OrQA Phantom photo](./graphics/orqa_photo.JPG?raw=true "OrQA Phantom photo")
