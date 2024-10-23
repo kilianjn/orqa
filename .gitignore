@@ -165,10 +165,6 @@ karo_qa/utils/__pycache__/
 karo_qa/__pycache__/
 __pycache__/
 
-
-*.csv
-*.pdf
-
 /*.py
 /*.ipynb
 !analyze_acr.py
