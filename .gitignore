@@ -165,7 +165,7 @@ karo_qa/utils/__pycache__/
 karo_qa/__pycache__/
 __pycache__/
 
-*.png
+
 *.csv
 *.pdf
 
