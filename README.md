@@ -29,8 +29,8 @@ conda activate karo
 To run the software choose one of the start scripts in the directory. 
 <img src="./graphics/basescript.png" width="70%" />
 
-Two filepaths are defined in the first lines:
-_path\_to\_dicom_ is the path the dicom data is stored at.
+Two filepaths are defined in the first lines:  
+_path\_to\_dicom_ is the path the dicom data is stored at.  
 _savedir_ is the path where the reports will be saved.
 
 Two objects are initialized.  
