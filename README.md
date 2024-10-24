@@ -31,7 +31,7 @@ To run the software choose one of the start scripts in the directory.
 
 Two filepaths are defined in the first lines:  
 - _path\_to\_dicom_ is the path the dicom data is stored at.
-- - _savedir_ is the path where the reports will be saved.
+- _savedir_ is the path where the reports will be saved.
 
 Two objects are initialized.  
 ***dicomFolderScanner*** prepares the Dicom data and produces a 4D array (time, slice, Y, X).
